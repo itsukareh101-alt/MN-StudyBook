@@ -1089,15 +1089,15 @@ export const motorcycleQuestions: Question[] = [
   },
   {
     id: 91,
-    question: "Why is lane sharing or 'lane splitting' between rows of moving cars dangerous?",
+    question: "Although lane splitting and filtering is legal under specific low-speed conditions in Minnesota, why is high-speed splitting (such as at highway speeds) prohibited and highly dangerous?",
     options: [
-      "It restricts your escape paths, reduces space buffers, and can shock drivers who do not expect a passing motorcycle",
-      "It causes the motorcycle's cooling lines to freeze instantly",
+      "It severely restricts your escape paths, reduces critical space buffers, and can surprise drivers who do not expect a passing motorcycle",
+      "It causes the motorcycle's engine cooling lines to expand and freeze instantly",
       "It wears out the chain drive sprocket twice as fast",
-      "It reduces alternator voltage and dimms the headlight"
+      "It reduces alternator voltage and dims the headlight"
     ],
     correctAnswerIndex: 0,
-    explanation: "Sharing a lane with a vehicle reduces your safety buffer, puts you directly inside driver blind spots, and leaves you with no escape path if a vehicle moves suddenly."
+    explanation: "Under Minnesota law, lane filtering and splitting are strictly limited to traffic speeds of 25 mph or less. High-speed splitting is highly dangerous and illegal because it reduces your safety buffer, puts you in blind spots, and leaves you with zero escape paths if a vehicle moves suddenly."
   },
   {
     id: 92,

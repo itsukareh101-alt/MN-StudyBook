@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   Volume2, 
@@ -5,9 +6,10 @@ import {
   ShieldCheck, 
   ArrowRight, 
   CheckCircle2, 
-  XCircle 
+  XCircle,
+  Sliders
 } from 'lucide-react';
-import { Question, QuizMode } from '../types';
+import { Question, QuizMode, PermitType } from '../types';
 
 interface QuizActiveViewProps {
   currentIndex: number;
@@ -22,6 +24,9 @@ interface QuizActiveViewProps {
   onSelectOption: (idx: number) => void;
   autoRevocationTriggered: boolean;
   onNextQuestion: () => void;
+  permitType: PermitType;
+  voiceVolume: number;
+  setVoiceVolume: (v: number) => void;
 }
 
 export default function QuizActiveView({
@@ -36,8 +41,12 @@ export default function QuizActiveView({
   toggleSpeakQuestion,
   onSelectOption,
   autoRevocationTriggered,
-  onNextQuestion
+  onNextQuestion,
+  permitType,
+  voiceVolume,
+  setVoiceVolume
 }: QuizActiveViewProps) {
+  const [showVoiceSettings, setShowVoiceSettings] = useState(false);
   const currentQuestion = activeQuestions[currentIndex];
   if (!currentQuestion) return null;
 
@@ -100,7 +109,9 @@ export default function QuizActiveView({
             Topic: {mode === 'exam' ? 'Exam Pool' : mode.toUpperCase()}
           </span>
           <span className="w-1.5 h-1.5 rounded-full bg-blue-600"></span>
-          <span className="text-[11px] text-slate-500 font-mono font-medium">Minnesota Safety Code</span>
+          <span className="text-[11px] text-slate-500 font-mono font-medium">
+            {permitType === 'motorcycle' ? 'Minnesota Safety Code' : 'Minnesota Driver’s Manual'}
+          </span>
         </div>
 
         {/* Question text */}
@@ -108,18 +119,77 @@ export default function QuizActiveView({
           <h3 className="text-lg md:text-xl font-display text-slate-805 leading-snug flex-1 font-bold">
             {currentIndex + 1}. {currentQuestion.question}
           </h3>
-          <button
-            onClick={toggleSpeakQuestion}
-            className={`p-2.5 rounded-xl border flex items-center justify-center transition-all cursor-pointer shrink-0 active:scale-95 ${
-              isSpeaking 
-                ? 'bg-blue-100 border-blue-300 text-blue-700 animate-pulse' 
-                : 'bg-slate-50 border-slate-200 text-slate-500 hover:bg-blue-50 hover:border-blue-200 hover:text-blue-600'
-            }`}
-            title={isSpeaking ? "Stop reading" : "Read question aloud"}
-          >
-            {isSpeaking ? <VolumeX className="w-5 h-5" /> : <Volume2 className="w-5 h-5 animate-pulse" />}
-          </button>
+          <div className="flex flex-col items-center gap-2 shrink-0">
+            <button
+              onClick={toggleSpeakQuestion}
+              className={`p-2.5 rounded-xl border flex items-center justify-center transition-all cursor-pointer shrink-0 active:scale-95 ${
+                isSpeaking 
+                  ? 'bg-blue-100 border-blue-300 text-blue-700' 
+                  : 'bg-slate-50 border-slate-200 text-slate-500 hover:bg-blue-50 hover:border-blue-200 hover:text-blue-600'
+              }`}
+              title={isSpeaking ? "Stop reading" : "Read question aloud"}
+            >
+              {isSpeaking ? <VolumeX className="w-5 h-5 animate-pulse" /> : <Volume2 className="w-5 h-5" />}
+            </button>
+            
+            <button
+              id="btn-voice-tune-toggle"
+              onClick={() => setShowVoiceSettings(!showVoiceSettings)}
+              className={`px-2 py-1 rounded-lg border text-[10px] font-mono font-bold flex items-center gap-1 transition-all cursor-pointer active:scale-95 ${
+                showVoiceSettings
+                  ? 'bg-blue-50 border-blue-200 text-blue-700'
+                  : 'bg-white border-slate-200 text-slate-400 hover:text-slate-600 hover:bg-slate-50'
+              }`}
+              title="Tune reader voice (soften/speed)"
+            >
+              <Sliders className="w-3 h-3" />
+              <span>{showVoiceSettings ? "Close" : "Tune"}</span>
+            </button>
+          </div>
         </div>
+
+        {/* Voice Settings drawer */}
+        <AnimatePresence>
+          {showVoiceSettings && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.2 }}
+              className="bg-slate-50 border border-slate-200 rounded-2xl p-4.5 space-y-4 overflow-hidden text-sm"
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-1.5 text-xs text-slate-700 font-bold font-mono uppercase">
+                  <Sliders className="w-3.5 h-3.5 text-slate-500" />
+                  <span>Acoustic Reader Control</span>
+                </div>
+                <span className="text-[9px] font-mono px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-100 font-bold">
+                  Autosaved
+                </span>
+              </div>
+              
+              {/* Slider Fine Tuning */}
+              <div className="space-y-3.5 pt-1">
+                <div className="space-y-1">
+                  <div className="flex justify-between text-xs font-semibold text-slate-600">
+                    <span className="flex items-center gap-1.5">🔊 Voice Volume: <span className="font-mono text-[10px] bg-slate-200 px-1.5 py-0.5 rounded">{(voiceVolume * 100).toFixed(0)}%</span></span>
+                    <span className="text-slate-400 text-[10px]">Adjust to soften</span>
+                  </div>
+                  <input
+                    id="slider-voice-volume"
+                    type="range"
+                    min="0.1"
+                    max="1"
+                    step="0.05"
+                    value={voiceVolume}
+                    onChange={(e) => setVoiceVolume(parseFloat(e.target.value))}
+                    className="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
+                  />
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Multi choice options */}
         <div className="space-y-3 pt-1">
@@ -182,7 +252,9 @@ export default function QuizActiveView({
             >
               <div className="flex items-center gap-1.5 text-xs text-blue-700 font-mono font-bold uppercase">
                 <ShieldCheck className="w-4.5 h-4.5 text-blue-700" />
-                <span>Minnesota Safety Rule Citation</span>
+                <span>
+                  {permitType === 'motorcycle' ? 'Minnesota Safety Rule Citation' : 'Minnesota Traffic Law Citation'}
+                </span>
               </div>
               <p className="text-xs text-slate-650 leading-relaxed font-semibold">
                 {currentQuestion.explanation}

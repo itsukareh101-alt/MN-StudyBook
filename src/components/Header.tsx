@@ -1,12 +1,15 @@
 import { Compass } from 'lucide-react';
-import { AppView } from '../types';
+import { AppView, PermitType } from '../types';
 
 interface HeaderProps {
   view: AppView;
   setView: (view: AppView) => void;
+  permitType: PermitType;
 }
 
-export default function Header({ view, setView }: HeaderProps) {
+export default function Header({ view, setView, permitType }: HeaderProps) {
+  const isMoto = permitType === 'motorcycle';
+
   return (
     <header id="header" className="bg-blue-900 text-white shadow-md sticky top-0 z-50 px-4 py-3.5 transition-all">
       <div className="max-w-6xl mx-auto flex items-center justify-between">
@@ -22,11 +25,15 @@ export default function Header({ view, setView }: HeaderProps) {
               <h1 className="text-sm md:text-md font-display font-medium uppercase tracking-wider text-white font-bold">
                 RiderAcademy
               </h1>
-              <span className="text-[10px] bg-blue-800 text-blue-200 font-mono font-semibold px-2 py-0.5 rounded border border-blue-700 uppercase">
-                Manual v2026
+              <span className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded border uppercase transition-colors ${
+                isMoto
+                  ? 'bg-amber-600 text-amber-50 border-amber-500'
+                  : 'bg-indigo-600 text-indigo-50 border-indigo-500'
+              }`}>
+                {isMoto ? 'Class M Manual' : 'Class D Manual'}
               </span>
             </div>
-            <p className="text-[10px] md:text-xs text-blue-200">Minnesota License Practice Study Companion</p>
+            <p className="text-[10px] md:text-xs text-blue-200">Minnesota DMV Permit Practice Companion</p>
           </div>
         </div>
 

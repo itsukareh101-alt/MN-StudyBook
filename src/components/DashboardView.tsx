@@ -5,21 +5,28 @@ import {
   BookOpen, 
   TrendingUp, 
   ChevronRight, 
-  Play 
+  Play,
+  RotateCcw,
+  ShieldAlert,
+  HelpCircle
 } from 'lucide-react';
-import { QuizMode } from '../types';
+import { QuizMode, PermitType } from '../types';
 
 interface DashboardViewProps {
   autoRevocationTriggered: boolean;
   setAutoRevocationTriggered: (val: boolean) => void;
   startQuiz: (mode: QuizMode) => void;
+  permitType: PermitType;
 }
 
 export default function DashboardView({ 
   autoRevocationTriggered, 
   setAutoRevocationTriggered, 
-  startQuiz 
+  startQuiz,
+  permitType
 }: DashboardViewProps) {
+  const isMoto = permitType === 'motorcycle';
+
   return (
     <div className="space-y-6">
       
@@ -30,15 +37,15 @@ export default function DashboardView({
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
-            className="bg-rose-50 border border-rose-200 text-rose-850 p-5 rounded-2xl flex flex-col md:flex-row items-center gap-4 justify-between shadow-sm"
+            className="bg-rose-50 border border-rose-205 border-rose-200 text-rose-850 p-5 rounded-2xl flex flex-col md:flex-row items-center gap-4 justify-between shadow-sm animate-fade-in"
           >
             <div className="flex items-start gap-4">
               <div className="p-3 bg-rose-100 text-rose-600 rounded-xl shrink-0 border border-rose-200">
-                <AlertTriangle className="w-6 h-6" />
+                <AlertTriangle className="w-6 h-6 animate-pulse" />
               </div>
               <div>
                 <h4 className="text-md font-display font-bold text-rose-900">
-                  Exam Terminated Automatically
+                  {isMoto ? 'Motorcycle' : 'Driver'} Exam Terminated Automatically
                 </h4>
                 <p className="text-xs leading-relaxed text-slate-600 mt-1 font-medium">
                   In accordance with standard state-equivalent guidelines, hitting <strong className="text-rose-600 font-bold text-pink-700">8 strikes (incorrect answers)</strong> results in immediate failure to simulate real licensing threshold parameters. Keep study drilling and try again!
@@ -60,14 +67,16 @@ export default function DashboardView({
         <div className="absolute top-1/2 left-0 w-64 h-64 bg-blue-50/40 rounded-full filter blur-3xl -translate-y-1/2 pointer-events-none"></div>
         <div className="space-y-3 w-full text-center md:text-left relative z-10">
           <span className="inline-block px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-bold uppercase tracking-wider">
-            Official Manual Curriculum Study
+            {isMoto ? 'Minnesota Class-M Manual' : 'Minnesota Class-D Manual'} Study System
           </span>
           <h2 className="text-2xl md:text-4xl font-display text-slate-805 uppercase tracking-tight leading-tight font-bold">
-            Minnesota Class M <br />
-            <span className="text-blue-600">Permit Training Deck</span>
+            {isMoto ? 'Minnesota Class M' : 'Minnesota Class D'}<br />
+            <span className="text-blue-600">{isMoto ? 'Permit Training Deck' : 'Drivers Permit Prep'}</span>
           </h2>
           <p className="text-slate-600 text-sm md:text-md leading-relaxed max-w-2xl font-medium">
-            Practice with a rigorous database of motorcycle knowledge questions referencing the Minnesota system guidelines. Failures occur instantly upon receiving 8 incorrect selections in strict mode, simulating real exam constraints.
+            {isMoto 
+              ? "Practice with a rigorous database of motorcycle knowledge questions referencing the Minnesota system guidelines. Failures occur instantly upon receiving 8 incorrect selections in strict mode, simulating real exam constraints."
+              : "Prepare for your Minnesota passenger vehicle permit test. Study road signs, default speed limits, safe parking spacing, strict drinking laws (implied consent, Not a Drop), and hands-free rules with feedback citations."}
           </p>
         </div>
       </div>
@@ -96,7 +105,7 @@ export default function DashboardView({
                 Real Mock Exam Simulator
               </h4>
               <p className="text-xs text-slate-550 mt-2 leading-relaxed font-medium">
-                Simulate the standard state motorcycle knowledge test environment. If you make 8 mistakes, the system terminates the test immediately, logging a failure.
+                Simulate the real {isMoto ? 'motorcycle' : 'driver'} state knowledge test environment. If you log 8 incorrect answers, the test ends instantly, registering a simulated license attempt failure.
               </p>
               <ul className="mt-4 space-y-1.5 text-xs text-slate-600 font-mono">
                 <li className="flex items-center gap-2 font-medium">
@@ -136,7 +145,7 @@ export default function DashboardView({
                 Study Practice Marathon
               </h4>
               <p className="text-xs text-slate-550 mt-2 leading-relaxed font-medium">
-                No pressure, no failure ceilings. Practice all questions sequentially with instant feedback and extensive manual citations. Perfect for building confidence and memorizing the manual.
+                Review at your own relaxed pace. There are no limits on mistakes. Perfect for learning every single question with instant explanation quotes from the official {isMoto ? 'MN Motorcycle Manual' : 'MN DMV Class D Manual'}.
               </p>
               <ul className="mt-4 space-y-1.5 text-xs text-slate-600 font-mono">
                 <li className="flex items-center gap-2 font-medium">
@@ -176,12 +185,16 @@ export default function DashboardView({
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           
-          {/* Control Techniques */}
+          {/* Card 1: Controls (Moto) vs Signs/Signals (Driver) */}
           <div className="bg-white border-2 border-slate-200 p-5 rounded-2xl flex flex-col justify-between hover:border-blue-300 hover:shadow-md transition-all duration-300 group">
             <div>
-              <h5 className="text-sm font-bold font-display text-slate-800 uppercase tracking-wide group-hover:text-blue-700 transition-colors">control &amp; controls</h5>
-              <p className="text-[11.5px] text-slate-500 mt-1 leading-relaxed font-medium">
-                Braking systems, turning curves, countersteering, traction management.
+              <h5 className="text-sm font-bold font-display text-slate-800 uppercase tracking-wide group-hover:text-blue-700 transition-colors">
+                {isMoto ? 'control & controls' : 'Signs & signals'}
+              </h5>
+              <p className="text-[11.5px] text-slate-500 mt-1 leading-relaxed font-semibold">
+                {isMoto 
+                  ? 'Braking systems, turning curves, countersteering, traction management.'
+                  : 'Road sign shapes (八角, triangle), red/yellow flashing signals, pavement markings.'}
               </p>
             </div>
             <button
@@ -192,12 +205,16 @@ export default function DashboardView({
             </button>
           </div>
 
-          {/* Lanes & Positioning */}
+          {/* Card 2: Lanes (Moto) vs Right-of-Way & Speed Limit (Driver) */}
           <div className="bg-white border-2 border-slate-200 p-5 rounded-2xl flex flex-col justify-between hover:border-blue-300 hover:shadow-md transition-all duration-300 group">
             <div>
-              <h5 className="text-sm font-bold font-display text-slate-800 uppercase tracking-wide group-hover:text-blue-700 transition-colors">lane &amp; spacing</h5>
-              <p className="text-[11.5px] text-slate-500 mt-1 leading-relaxed font-medium">
-                Lane segments, following distances, group riding formulas, blind spot safety.
+              <h5 className="text-sm font-bold font-display text-slate-800 uppercase tracking-wide group-hover:text-blue-700 transition-colors">
+                {isMoto ? 'lane & spacing' : 'Speed & Right-of-way'}
+              </h5>
+              <p className="text-[11.5px] text-slate-500 mt-1 leading-relaxed font-semibold">
+                {isMoto 
+                  ? 'Lane segments, following distances, group riding formulas, blind spot safety.'
+                  : 'Default speeds (alleys, urban), roundabout rules, uncontrolled yields, emergency stops.'}
               </p>
             </div>
             <button
@@ -208,12 +225,16 @@ export default function DashboardView({
             </button>
           </div>
 
-          {/* State Laws & Penalties */}
+          {/* Card 3: Laws (Moto) vs DWI & Safety Laws (Driver) */}
           <div className="bg-white border-2 border-slate-200 p-5 rounded-2xl flex flex-col justify-between hover:border-blue-300 hover:shadow-md transition-all duration-300 group">
             <div>
-              <h5 className="text-sm font-bold font-display text-slate-800 uppercase tracking-wide group-hover:text-blue-700 transition-colors">laws, gear &amp; limits</h5>
-              <p className="text-[11.5px] text-slate-500 mt-1 leading-relaxed font-medium">
-                State helmet rules, eye exceptions, permit constraints, Implied Consent limits.
+              <h5 className="text-sm font-bold font-display text-slate-800 uppercase tracking-wide group-hover:text-blue-700 transition-colors">
+                {isMoto ? 'laws, gear & limits' : 'Laws, DWI & Safety'}
+              </h5>
+              <p className="text-[11.5px] text-slate-500 mt-1 leading-relaxed font-semibold">
+                {isMoto 
+                  ? 'State helmet rules, eye exceptions, permit constraints, Implied Consent limits.'
+                  : 'Implied Consent BAC, under-21 zero tolerance (Not a Drop), Vanessa’s Law, seat belt mandates.'}
               </p>
             </div>
             <button

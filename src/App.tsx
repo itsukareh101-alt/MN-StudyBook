@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { motorcycleQuestions, Question } from './data/questions';
-import { AppView, QuizMode, ExamAttempt } from './types';
+import { motorcycleQuestions } from './data/questions';
+import { driverQuestions } from './data/driverQuestions';
+import { Question, AppView, QuizMode, ExamAttempt, PermitType } from './types';
 
 // Modular Subcomponents
 import Header from './components/Header';
@@ -23,6 +24,22 @@ export default function App() {
   });
   
   const [mode, setMode] = useState<QuizMode>('marathon');
+  const [permitType, setPermitType] = useState<PermitType>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('mn_moto_permit_type');
+      if (saved === 'motorcycle' || saved === 'classD') {
+        return saved as PermitType;
+      }
+    }
+    return 'motorcycle';
+  });
+
+  const handleSetPermitType = (type: PermitType) => {
+    setPermitType(type);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('mn_moto_permit_type', type);
+    }
+  };
   
   const handleAcceptDisclaimer = () => {
     if (typeof window !== 'undefined') {
@@ -42,6 +59,25 @@ export default function App() {
   const [quizFinished, setQuizFinished] = useState(false);
   const [autoRevocationTriggered, setAutoRevocationTriggered] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
+
+  // Softened Speech Synthesis configurations
+  const [voiceVolume, setVoiceVolumeState] = useState<number>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('mn_permit_voice_volume');
+      return saved ? parseFloat(saved) : 0.65; // Soft and comfortable default
+    }
+    return 0.65;
+  });
+
+  const voiceRate = 0.80;   // Calm, slower cadence (80% speed) to avoid rushing
+  const voicePitch = 0.95;  // Warm, slightly deeper frequency (95% pitch)
+
+  const setVoiceVolume = (v: number) => {
+    setVoiceVolumeState(v);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('mn_permit_voice_volume', v.toString());
+    }
+  };
 
   // Pre-fetch SpeechSynthesis voices on startup to prevent latency on subsequent clicks
   useEffect(() => {
@@ -108,9 +144,9 @@ export default function App() {
         }
         
         // Fine-tuning elements to ensure a soft, warm, relaxed, and fully natural speaking pace
-        utterance.pitch = 1.0;   // Perfect human pitch strictly at 1.0
-        utterance.rate = 0.85;   // Gentle, slower, calmer speaking rhythm (0.85 so it doesn't rush)
-        utterance.volume = 0.9;  // Slightly softer audio volume level
+        utterance.pitch = voicePitch;   // Adjusted pitch for softer tone
+        utterance.rate = voiceRate;     // Adjusted speaking pace
+        utterance.volume = voiceVolume; // Adjusted volume level
         
         utterance.onend = () => setIsSpeaking(false);
         utterance.onerror = () => setIsSpeaking(false);
@@ -138,43 +174,99 @@ export default function App() {
     setMode(selectedMode);
     let filtered: Question[] = [];
     
+    const pool = permitType === 'motorcycle' ? motorcycleQuestions : driverQuestions;
+
     if (selectedMode === 'exam' || selectedMode === 'marathon') {
       // Full test has all questions directly
-      filtered = [...motorcycleQuestions];
-    } else if (selectedMode === 'controls') {
-      // Filter: Controls & techniques
-      filtered = motorcycleQuestions.filter(q => 
-        q.question.toLowerCase().includes('brake') || 
-        q.question.toLowerCase().includes('turn') || 
-        q.question.toLowerCase().includes('throttle') ||
-        q.question.toLowerCase().includes('steer') ||
-        q.question.toLowerCase().includes('stop') ||
-        q.question.toLowerCase().includes('swerve') ||
-        q.question.toLowerCase().includes('clutch')
-      );
-    } else if (selectedMode === 'lanes') {
-      // Filter: Lane positioning, following, trucks, group riding
-      filtered = motorcycleQuestions.filter(q => 
-        q.question.toLowerCase().includes('lane') || 
-        q.question.toLowerCase().includes('follow') || 
-        q.question.toLowerCase().includes('group') ||
-        q.question.toLowerCase().includes('position') ||
-        q.question.toLowerCase().includes('behind') ||
-        q.question.toLowerCase().includes('staggered')
-      );
-    } else if (selectedMode === 'laws') {
-      // Filter: Minnesota Specific Laws, blood alcohol, helmet requirements, permits
-      filtered = motorcycleQuestions.filter(q => 
-        q.question.toLowerCase().includes('minnesota') || 
-        q.question.toLowerCase().includes('law') || 
-        q.question.toLowerCase().includes('helmet') ||
-        q.question.toLowerCase().includes('permit') ||
-        q.question.toLowerCase().includes('refusal') ||
-        q.question.toLowerCase().includes('implied') ||
-        q.question.toLowerCase().includes('bac') ||
-        q.question.toLowerCase().includes('passenger') ||
-        q.question.toLowerCase().includes('legal')
-      );
+      filtered = [...pool];
+    } else if (permitType === 'motorcycle') {
+      if (selectedMode === 'controls') {
+        // Filter: Controls & techniques
+        filtered = pool.filter(q => 
+          q.question.toLowerCase().includes('brake') || 
+          q.question.toLowerCase().includes('turn') || 
+          q.question.toLowerCase().includes('throttle') ||
+          q.question.toLowerCase().includes('steer') ||
+          q.question.toLowerCase().includes('stop') ||
+          q.question.toLowerCase().includes('swerve') ||
+          q.question.toLowerCase().includes('clutch')
+        );
+      } else if (selectedMode === 'lanes') {
+        // Filter: Lane positioning, following, trucks, group riding
+        filtered = pool.filter(q => 
+          q.question.toLowerCase().includes('lane') || 
+          q.question.toLowerCase().includes('follow') || 
+          q.question.toLowerCase().includes('group') ||
+          q.question.toLowerCase().includes('position') ||
+          q.question.toLowerCase().includes('behind') ||
+          q.question.toLowerCase().includes('staggered')
+        );
+      } else if (selectedMode === 'laws') {
+        // Filter: Minnesota Specific Laws, blood alcohol, helmet requirements, permits
+        filtered = pool.filter(q => 
+          q.question.toLowerCase().includes('minnesota') || 
+          q.question.toLowerCase().includes('law') || 
+          q.question.toLowerCase().includes('helmet') ||
+          q.question.toLowerCase().includes('permit') ||
+          q.question.toLowerCase().includes('refusal') ||
+          q.question.toLowerCase().includes('implied') ||
+          q.question.toLowerCase().includes('bac') ||
+          q.question.toLowerCase().includes('passenger') ||
+          q.question.toLowerCase().includes('legal')
+        );
+      }
+    } else {
+      // Driver Class D filtered grills
+      if (selectedMode === 'controls') {
+        // Signs & signals
+        filtered = pool.filter(q => 
+          q.question.toLowerCase().includes('sign') || 
+          q.question.toLowerCase().includes('signal') || 
+          q.question.toLowerCase().includes('light') || 
+          q.question.toLowerCase().includes('mark') || 
+          q.question.toLowerCase().includes('shape') ||
+          q.question.toLowerCase().includes('diamond') ||
+          q.question.toLowerCase().includes('yellow circle') ||
+          q.question.toLowerCase().includes('octagonal')
+        );
+      } else if (selectedMode === 'lanes') {
+        // Speed & Right-of-way
+        filtered = pool.filter(q => 
+          q.question.toLowerCase().includes('speed') || 
+          q.question.toLowerCase().includes('right-of-way') || 
+          q.question.toLowerCase().includes('yield') || 
+          q.question.toLowerCase().includes('uncontrolled') || 
+          q.question.toLowerCase().includes('roundabout') || 
+          q.question.toLowerCase().includes('follow') || 
+          q.question.toLowerCase().includes('park') || 
+          q.question.toLowerCase().includes('curb') ||
+          q.question.toLowerCase().includes('alley')
+        );
+      } else if (selectedMode === 'laws') {
+        // Laws, DWI & Safety (Implied Consent, Not a Drop, Vanessa's Law, Ted Foss, seatbelt)
+        filtered = pool.filter(q => 
+          q.question.toLowerCase().includes('law') || 
+          q.question.toLowerCase().includes('alcohol') || 
+          q.question.toLowerCase().includes('bac') || 
+          q.question.toLowerCase().includes('consent') || 
+          q.question.toLowerCase().includes('insurance') || 
+          q.question.toLowerCase().includes('seat belt') || 
+          q.question.toLowerCase().includes('vanessa') || 
+          q.question.toLowerCase().includes('not a drop') ||
+          q.question.toLowerCase().includes('drop') ||
+          q.question.toLowerCase().includes('cell') ||
+          q.question.toLowerCase().includes('mobile') ||
+          q.question.toLowerCase().includes('hands-free') ||
+          q.question.toLowerCase().includes('move over') ||
+          q.question.toLowerCase().includes('report') ||
+          q.question.toLowerCase().includes('flee')
+        );
+      }
+    }
+
+    // Safety fallback
+    if (filtered.length === 0) {
+      filtered = [...pool];
     }
 
     // Ensure absolute uniqueness
@@ -265,7 +357,8 @@ export default function App() {
       score: finalScore,
       totalQuestions: total,
       strikes: finalStrikes,
-      status
+      status,
+      permitType: permitType
     };
 
     const updatedAttempts = [newAttempt, ...attempts].slice(0, 30);
@@ -283,11 +376,41 @@ export default function App() {
   return (
     <div className="min-h-screen bg-slate-50 text-slate-800 flex flex-col font-sans selection:bg-blue-500/30 selection:text-blue-905">
       
-      <Header view={view} setView={setView} />
+      <Header view={view} setView={setView} permitType={permitType} />
 
       {/* Main Content Area */}
       <main className="flex-1 max-w-6xl w-full mx-auto p-4 md:p-6 flex flex-col justify-start">
         
+        {/* License Type Picker - Beautiful, responsive segment navigation selection */}
+        {view !== 'quiz' && view !== 'disclaimer' && (
+          <div className="flex justify-center mb-6 animate-fade-in">
+            <div className="bg-white p-1 rounded-2xl border-2 border-slate-205/60 border-slate-200 shadow-sm flex items-center gap-1">
+              <button
+                id="opt-license-moto"
+                onClick={() => handleSetPermitType('motorcycle')}
+                className={`px-5 py-2.5 rounded-xl text-xs font-display font-medium tracking-wider transition-all duration-200 cursor-pointer flex items-center gap-2 active:scale-97 ${
+                  permitType === 'motorcycle'
+                    ? 'bg-amber-600 text-white font-bold shadow-sm'
+                    : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50'
+                }`}
+              >
+                <span>🏍️ Class M Motorcycle</span>
+              </button>
+              <button
+                id="opt-license-driver"
+                onClick={() => handleSetPermitType('classD')}
+                className={`px-5 py-2.5 rounded-xl text-xs font-display font-medium tracking-wider transition-all duration-200 cursor-pointer flex items-center gap-2 active:scale-97 ${
+                  permitType === 'classD'
+                    ? 'bg-indigo-650 bg-indigo-600 text-white font-bold shadow-sm'
+                    : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50'
+                }`}
+              >
+                <span>🚗 Class D Driver</span>
+              </button>
+            </div>
+          </div>
+        )}
+
         <AnimatePresence mode="wait">
           
           {view === 'home' && (
@@ -302,6 +425,7 @@ export default function App() {
                 autoRevocationTriggered={autoRevocationTriggered}
                 setAutoRevocationTriggered={setAutoRevocationTriggered}
                 startQuiz={startQuiz}
+                permitType={permitType}
               />
             </motion.div>
           )}
@@ -333,6 +457,9 @@ export default function App() {
                   onSelectOption={handleSelectOption}
                   autoRevocationTriggered={autoRevocationTriggered}
                   onNextQuestion={handleNextQuestion}
+                  permitType={permitType}
+                  voiceVolume={voiceVolume}
+                  setVoiceVolume={setVoiceVolume}
                 />
               ) : (
                 <QuizResultsView 
@@ -358,6 +485,7 @@ export default function App() {
                 attempts={attempts}
                 onResetStats={resetAllStats}
                 setView={setView}
+                permitType={permitType}
               />
             </motion.div>
           )}
@@ -376,9 +504,9 @@ export default function App() {
       <footer id="footer" className="mt-12 bg-white border-t border-slate-200 p-6 text-xs text-slate-500 leading-relaxed text-center sm:text-left shadow-inner transition-colors">
         <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
           <div className="space-y-1">
-            <p className="font-bold text-slate-800">RiderAcademy — Minnesota Motorcycle Permit Practice Companion © 2026</p>
+            <p className="font-bold text-slate-800">RiderAcademy — Minnesota Permit Practice Companion © 2026</p>
             <p className="max-w-2xl text-slate-400">
-              Constructed strictly as a realistic studying helper based on safety guidelines cited from state public motorcycle operator instruction manual materials. This site is completely independent of the state driver licensing services division. Always practice safe riding techniques and wear DOT approved gear.
+              Constructed strictly as a realistic studying helper based on safety guidelines cited from state public operator instruction manuals. This site is completely independent of the state driver licensing services division. Always practice safe driving techniques, pay full attention, and wear safety gear.
             </p>
           </div>
           <div className="flex gap-4 shrink-0 font-mono text-[10px] font-semibold text-slate-500">
@@ -386,8 +514,12 @@ export default function App() {
               Disclaimer &amp; Rules
              </button>
             <span>•</span>
-            <a href="https://assets.dps.mn.gov/files/dvs/motorcycle-manual.pdf" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:text-blue-800 hover:underline">
-              Official PDF Manual Reference
+            <a href="https://assets.dps.mn.gov/files/dvs/motorcycle-manual.pdf" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:text-blue-800 hover:underline text-blue-650">
+              Class M Manual
+            </a>
+            <span>•</span>
+            <a href="https://assets.dps.mn.gov/files/dvs/dvs-class-d-drivers-manual-english.pdf" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:text-blue-800 hover:underline text-blue-650">
+              Class D Driver Manual
             </a>
           </div>
         </div>

@@ -1,31 +1,39 @@
 import { History, Trash2, ArrowRight } from 'lucide-react';
-import { ExamAttempt, AppView } from '../types';
+import { ExamAttempt, AppView, PermitType } from '../types';
 
 interface StatsHistoryViewProps {
   attempts: ExamAttempt[];
   onResetStats: () => void;
   setView: (view: AppView) => void;
+  permitType: PermitType;
 }
 
-export default function StatsHistoryView({ attempts, onResetStats, setView }: StatsHistoryViewProps) {
-  // Compute metrics
-  const totalAttempted = attempts.length;
-  const examsTaken = attempts.filter(a => a.mode === 'Real Exam Simulator').length;
-  const examsPassed = attempts.filter(a => a.mode === 'Real Exam Simulator' && a.status === 'PASSED').length;
+export default function StatsHistoryView({ attempts, onResetStats, setView, permitType }: StatsHistoryViewProps) {
+  // Filter attempts for the active training deck to show accurate scoring metrics
+  const activeAttempts = attempts.filter(a => {
+    const itemType = a.permitType || 'motorcycle';
+    return itemType === permitType;
+  });
+
+  const totalAttempted = activeAttempts.length;
+  const examsTaken = activeAttempts.filter(a => a.mode.includes('Exam')).length;
+  const examsPassed = activeAttempts.filter(a => a.mode.includes('Exam') && a.status === 'PASSED').length;
   const passRate = examsTaken > 0 ? Math.round((examsPassed / examsTaken) * 100) : 0;
+
+  const currentLabel = permitType === 'motorcycle' ? '🏍️ Class M Motorcycle' : '🚗 Class D Passenger';
 
   return (
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row items-start justify-between gap-4 border-b border-slate-200 pb-4">
         <div>
-          <span className="inline-block text-xs font-mono text-blue-700 uppercase tracking-wider px-2.5 py-1 bg-blue-100 rounded-full border border-blue-200 font-bold">
-            Personal Record Book
+          <span className="inline-block text-xs font-mono text-blue-700 uppercase tracking-wider px-2.5 py-1 bg-blue-105 bg-blue-100 rounded-full border border-blue-200 font-bold">
+            Personal Record Book • {currentLabel}
           </span>
           <h2 className="text-2xl font-display text-slate-800 mt-2 font-bold">
             My Minnesota Practice Record
           </h2>
-          <p className="text-slate-500 text-sm mt-1">
-            Keep track of your mock exams, drills, and positioning practices stored locally.
+          <p className="text-slate-500 text-sm mt-1 leading-relaxed">
+            Keep track of your mock exams, drills, and positioning practices stored locally for <strong>{currentLabel}</strong>.
           </p>
         </div>
         {attempts.length > 0 && (
@@ -43,13 +51,13 @@ export default function StatsHistoryView({ attempts, onResetStats, setView }: St
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         <div className="bg-white border-2 border-slate-200 rounded-2xl p-5 text-center space-y-1 shadow-sm hover:border-slate-300 transition-colors">
           <p className="text-xs text-slate-500 uppercase font-mono font-bold">Sessions Taken</p>
-          <p className="text-3xl font-extrabold text-slate-800">{totalAttempted}</p>
-          <p className="text-[10px] text-slate-400 font-medium">Practice, Drills, Exams</p>
+          <p className="text-3xl font-extrabold text-slate-805">{totalAttempted}</p>
+          <p className="text-[10px] text-slate-400 font-medium">{permitType === 'motorcycle' ? 'Class M' : 'Class D'} drills</p>
         </div>
         <div className="bg-white border-2 border-slate-200 rounded-2xl p-5 text-center space-y-1 shadow-sm hover:border-slate-300 transition-colors">
           <p className="text-xs text-slate-500 uppercase font-mono font-bold">Exam Simulator</p>
           <p className="text-3xl font-extrabold text-blue-700">{examsTaken}</p>
-          <p className="text-[10px] text-slate-400 font-medium">40-Question static trials</p>
+          <p className="text-[10px] text-slate-400 font-medium">40-Question trials</p>
         </div>
         <div className="bg-white border-2 border-slate-200 rounded-2xl p-5 text-center space-y-1 shadow-sm hover:border-slate-300 transition-colors">
           <p className="text-xs text-slate-500 uppercase font-mono font-bold">Exams Cleared</p>
@@ -59,15 +67,18 @@ export default function StatsHistoryView({ attempts, onResetStats, setView }: St
         <div className="bg-white border-2 border-slate-200 rounded-2xl p-5 text-center space-y-1 shadow-sm hover:border-slate-300 transition-colors">
           <p className="text-xs text-slate-500 uppercase font-mono font-bold">Exams Clear Rate</p>
           <p className="text-3xl font-extrabold text-sky-600">{passRate}%</p>
-          <p className="text-[10px] text-slate-400 font-medium">Average of simulator rounds</p>
+          <p className="text-[10px] text-slate-400 font-medium">Average of mock rounds</p>
         </div>
       </div>
 
       {/* Score logs list */}
       <div className="bg-white border-2 border-slate-200 rounded-3xl p-6 shadow-sm">
-        <h3 className="text-md font-display font-bold text-slate-800 mb-4 flex items-center gap-2">
-          <History className="w-5 h-5 text-slate-500" />
-          <span>Historical Attempts (Latest 30)</span>
+        <h3 className="text-md font-display font-bold text-slate-805 mb-4 flex items-center justify-between">
+          <span className="flex items-center gap-2">
+            <History className="w-5 h-5 text-slate-500" />
+            <span>Complete Historical Attempts (Latest 30)</span>
+          </span>
+          <span className="text-xs text-slate-400 font-medium">Filters automatically on current deck selection</span>
         </h3>
 
         {attempts.length === 0 ? (
@@ -90,36 +101,47 @@ export default function StatsHistoryView({ attempts, onResetStats, setView }: St
               <thead className="bg-slate-50/80 text-slate-500 uppercase font-mono text-[10px] border-b border-slate-200">
                 <tr>
                   <th className="p-4 font-bold">Date</th>
-                  <th className="p-4 font-bold">Mode</th>
+                  <th className="p-4 font-bold">License Deck</th>
+                  <th className="p-4 font-bold">Mode type</th>
                   <th className="p-4 text-center font-bold">Score</th>
                   <th className="p-4 text-center font-bold">Strikes Record</th>
                   <th className="p-4 text-center font-bold">Status Result</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 bg-white">
-                {attempts.map((item) => (
-                  <tr key={item.id} className="hover:bg-slate-50/50 transition-colors transition-all duration-150">
-                    <td className="p-4 font-mono font-medium text-slate-450">{item.date}</td>
-                    <td className="p-4">
-                      <span className="font-bold text-slate-805">{item.mode}</span>
-                    </td>
-                    <td className="p-4 text-center font-bold text-slate-800">
-                      {item.score} / {item.totalQuestions}
-                    </td>
-                    <td className="p-4 text-center font-mono text-slate-500">
-                      {item.strikes} errors
-                    </td>
-                    <td className="p-4 text-center">
-                      <span className={`inline-block px-2.5 py-1 rounded-full text-[9px] font-mono tracking-wider font-bold border ${
-                        item.status === 'PASSED' || item.status === 'COMPLETED'
-                          ? 'bg-emerald-50 text-emerald-750 border-emerald-200'
-                          : 'bg-rose-50 text-rose-700 border-rose-200'
-                      }`}>
-                        {item.status}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
+                {attempts.map((item) => {
+                  const itemPermit = item.permitType || 'motorcycle';
+                  return (
+                    <tr key={item.id} className="hover:bg-slate-50/50 transition-colors transition-all duration-150">
+                      <td className="p-4 font-mono font-medium text-slate-450">{item.date}</td>
+                      <td className="p-4 font-semibold text-slate-700">
+                        <span className={`inline-block px-2 py-0.5 rounded text-[10px] font-bold ${
+                          itemPermit === 'classD' ? 'bg-indigo-50 text-indigo-700 border border-indigo-150' : 'bg-amber-50 text-amber-700 border border-amber-100'
+                        }`}>
+                          {itemPermit === 'classD' ? '🚗 Class D' : '🏍️ Class M'}
+                        </span>
+                      </td>
+                      <td className="p-4">
+                        <span className="font-bold text-slate-805">{item.mode}</span>
+                      </td>
+                      <td className="p-4 text-center font-bold text-slate-800">
+                        {item.score} / {item.totalQuestions}
+                      </td>
+                      <td className="p-4 text-center font-mono text-slate-500">
+                        {item.strikes} errors
+                      </td>
+                      <td className="p-4 text-center">
+                        <span className={`inline-block px-2.5 py-1 rounded-full text-[9px] font-mono tracking-wider font-bold border ${
+                          item.status === 'PASSED' || item.status === 'COMPLETED'
+                            ? 'bg-emerald-50 text-emerald-750 border-emerald-200'
+                            : 'bg-rose-50 text-rose-700 border-rose-200'
+                        }`}>
+                          {item.status}
+                        </span>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
