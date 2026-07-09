@@ -317,9 +317,26 @@ export default function App() {
     }
 
     // Limit drills to 10 questions, exams to exactly 40 questions, else keep all (marathon)
-    const finalQuestions = (selectedMode !== 'exam' && selectedMode !== 'marathon')
+    const rawSelectedQuestions = (selectedMode !== 'exam' && selectedMode !== 'marathon')
       ? shuffled.slice(0, 10)
       : (selectedMode === 'exam' ? shuffled.slice(0, 40) : shuffled);
+
+    // Dynamic Option Shuffling to ensure the correct answer is not always A (index 0)
+    const finalQuestions = rawSelectedQuestions.map(q => {
+      const correctOptionText = q.options[q.correctAnswerIndex];
+      const shuffledOptions = [...q.options];
+      for (let i = shuffledOptions.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        const temp = shuffledOptions[i];
+        shuffledOptions[i] = shuffledOptions[j];
+        shuffledOptions[j] = temp;
+      }
+      return {
+        ...q,
+        options: shuffledOptions,
+        correctAnswerIndex: shuffledOptions.indexOf(correctOptionText)
+      };
+    });
 
     setActiveQuestions(finalQuestions);
     setCurrentIndex(0);
