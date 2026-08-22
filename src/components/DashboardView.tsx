@@ -26,6 +26,34 @@ export default function DashboardView({
   permitType
 }: DashboardViewProps) {
   const isMoto = permitType === 'motorcycle';
+  const isCdl = permitType === 'cdl';
+
+  const getHeroInfo = () => {
+    if (permitType === 'motorcycle') {
+      return {
+        badge: 'Minnesota Class-M Manual Study System',
+        title: 'Minnesota Class M',
+        subtitle: 'Permit Training Deck',
+        description: 'Practice with a rigorous database of motorcycle knowledge questions referencing the Minnesota system guidelines. Failures occur instantly upon receiving 8 incorrect selections in strict mode, simulating real exam constraints.'
+      };
+    } else if (permitType === 'classD') {
+      return {
+        badge: 'Minnesota Class-D Manual Study System',
+        title: 'Minnesota Class D',
+        subtitle: 'Drivers Permit Prep',
+        description: 'Prepare for your Minnesota passenger vehicle permit test. Study road signs, default speed limits, safe parking spacing, strict drinking laws (implied consent, Not a Drop), and hands-free rules with feedback citations.'
+      };
+    } else {
+      return {
+        badge: 'Minnesota CDL Manual & FMCSA TPR Entry-Level Training',
+        title: 'Minnesota CDL Class A/B/C',
+        subtitle: 'Commercial & ELDT / TPR Prep',
+        description: 'Master the Minnesota Commercial Driver’s License knowledge exam and mandatory FMCSA Entry-Level Driver Training (ELDT/TPR) standards. Covers Air Brakes, Combination Vehicles, Pre-Trip 7-Step Inspections, 0.04% BAC, Space Formulas, and Hazmat Rules.'
+      };
+    }
+  };
+
+  const hero = getHeroInfo();
 
   return (
     <div className="space-y-6">
@@ -37,7 +65,7 @@ export default function DashboardView({
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
-            className="bg-rose-50 border border-rose-205 border-rose-200 text-rose-850 p-5 rounded-2xl flex flex-col md:flex-row items-center gap-4 justify-between shadow-sm animate-fade-in"
+            className="bg-rose-50 border border-rose-200 text-rose-850 p-5 rounded-2xl flex flex-col md:flex-row items-center gap-4 justify-between shadow-sm animate-fade-in"
           >
             <div className="flex items-start gap-4">
               <div className="p-3 bg-rose-100 text-rose-600 rounded-xl shrink-0 border border-rose-200">
@@ -45,7 +73,7 @@ export default function DashboardView({
               </div>
               <div>
                 <h4 className="text-md font-display font-bold text-rose-900">
-                  {isMoto ? 'Motorcycle' : 'Driver'} Exam Terminated Automatically
+                  {isMoto ? 'Motorcycle' : isCdl ? 'CDL Commercial' : 'Driver'} Exam Terminated Automatically
                 </h4>
                 <p className="text-xs leading-relaxed text-slate-600 mt-1 font-medium">
                   In accordance with standard state-equivalent guidelines, hitting <strong className="text-rose-600 font-bold text-pink-700">8 strikes (incorrect answers)</strong> results in immediate failure to simulate real licensing threshold parameters. Keep study drilling and try again!
@@ -67,16 +95,14 @@ export default function DashboardView({
         <div className="absolute top-1/2 left-0 w-64 h-64 bg-blue-50/40 rounded-full filter blur-3xl -translate-y-1/2 pointer-events-none"></div>
         <div className="space-y-3 w-full text-center md:text-left relative z-10">
           <span className="inline-block px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-bold uppercase tracking-wider">
-            {isMoto ? 'Minnesota Class-M Manual' : 'Minnesota Class-D Manual'} Study System
+            {hero.badge}
           </span>
           <h2 className="text-2xl md:text-4xl font-display text-slate-805 uppercase tracking-tight leading-tight font-bold">
-            {isMoto ? 'Minnesota Class M' : 'Minnesota Class D'}<br />
-            <span className="text-blue-600">{isMoto ? 'Permit Training Deck' : 'Drivers Permit Prep'}</span>
+            {hero.title}<br />
+            <span className="text-blue-600">{hero.subtitle}</span>
           </h2>
           <p className="text-slate-600 text-sm md:text-md leading-relaxed max-w-2xl font-medium">
-            {isMoto 
-              ? "Practice with a rigorous database of motorcycle knowledge questions referencing the Minnesota system guidelines. Failures occur instantly upon receiving 8 incorrect selections in strict mode, simulating real exam constraints."
-              : "Prepare for your Minnesota passenger vehicle permit test. Study road signs, default speed limits, safe parking spacing, strict drinking laws (implied consent, Not a Drop), and hands-free rules with feedback citations."}
+            {hero.description}
           </p>
         </div>
       </div>
@@ -105,7 +131,7 @@ export default function DashboardView({
                 Real Mock Exam Simulator
               </h4>
               <p className="text-xs text-slate-550 mt-2 leading-relaxed font-medium">
-                Simulate the real {isMoto ? 'motorcycle' : 'driver'} state knowledge test environment. If you log 8 incorrect answers, the test ends instantly, registering a simulated license attempt failure.
+                Simulate the real {isMoto ? 'motorcycle' : isCdl ? 'commercial driver' : 'driver'} state knowledge test environment. If you log 8 incorrect answers, the test ends instantly, registering a simulated license attempt failure.
               </p>
               <ul className="mt-4 space-y-1.5 text-xs text-slate-600 font-mono">
                 <li className="flex items-center gap-2 font-medium">
@@ -145,7 +171,7 @@ export default function DashboardView({
                 Study Practice Marathon
               </h4>
               <p className="text-xs text-slate-550 mt-2 leading-relaxed font-medium">
-                Review at your own relaxed pace. There are no limits on mistakes. Perfect for learning every single question with instant explanation quotes from the official {isMoto ? 'MN Motorcycle Manual' : 'MN DMV Class D Manual'}.
+                Review at your own relaxed pace. There are no limits on mistakes. Perfect for learning every single question with instant explanation quotes from the official {isMoto ? 'MN Motorcycle Manual' : isCdl ? 'MN Commercial Driver’s License Manual & TPR Guidelines' : 'MN DMV Class D Manual'}.
               </p>
               <ul className="mt-4 space-y-1.5 text-xs text-slate-600 font-mono">
                 <li className="flex items-center gap-2 font-medium">
@@ -185,15 +211,17 @@ export default function DashboardView({
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           
-          {/* Card 1: Controls (Moto) vs Signs/Signals (Driver) */}
+          {/* Card 1: Controls (Moto) vs Signs (Driver) vs Air Brakes/Pre-Trip (CDL) */}
           <div className="bg-white border-2 border-slate-200 p-5 rounded-2xl flex flex-col justify-between hover:border-blue-300 hover:shadow-md transition-all duration-300 group">
             <div>
               <h5 className="text-sm font-bold font-display text-slate-800 uppercase tracking-wide group-hover:text-blue-700 transition-colors">
-                {isMoto ? 'control & controls' : 'Signs & signals'}
+                {isMoto ? 'control & controls' : isCdl ? 'Air Brakes & Inspection' : 'Signs & signals'}
               </h5>
               <p className="text-[11.5px] text-slate-500 mt-1 leading-relaxed font-semibold">
                 {isMoto 
                   ? 'Braking systems, turning curves, countersteering, traction management.'
+                  : isCdl
+                  ? 'Compressor cut-in/out, 60 psi warning buzzer, spring brakes, leakage limits, 7-step pre-trip.'
                   : 'Road sign shapes (八角, triangle), red/yellow flashing signals, pavement markings.'}
               </p>
             </div>
@@ -205,15 +233,17 @@ export default function DashboardView({
             </button>
           </div>
 
-          {/* Card 2: Lanes (Moto) vs Right-of-Way & Speed Limit (Driver) */}
+          {/* Card 2: Lanes (Moto) vs Right-of-Way (Driver) vs Combinations & Space (CDL) */}
           <div className="bg-white border-2 border-slate-200 p-5 rounded-2xl flex flex-col justify-between hover:border-blue-300 hover:shadow-md transition-all duration-300 group">
             <div>
               <h5 className="text-sm font-bold font-display text-slate-800 uppercase tracking-wide group-hover:text-blue-700 transition-colors">
-                {isMoto ? 'lane & spacing' : 'Speed & Right-of-way'}
+                {isMoto ? 'lane & spacing' : isCdl ? 'Combinations & Space' : 'Speed & Right-of-way'}
               </h5>
               <p className="text-[11.5px] text-slate-500 mt-1 leading-relaxed font-semibold">
                 {isMoto 
                   ? 'Lane segments, following distances, group riding formulas, blind spot safety.'
+                  : isCdl
+                  ? 'Glad hands, 5th wheel coupling, rollover crack-the-whip, space formula (1s/10ft), sight-side backing.'
                   : 'Default speeds (alleys, urban), roundabout rules, uncontrolled yields, emergency stops.'}
               </p>
             </div>
@@ -225,15 +255,17 @@ export default function DashboardView({
             </button>
           </div>
 
-          {/* Card 3: Laws (Moto) vs DWI & Safety Laws (Driver) */}
+          {/* Card 3: Laws (Moto) vs DWI (Driver) vs CDL Laws, ELDT & Hazmat (CDL) */}
           <div className="bg-white border-2 border-slate-200 p-5 rounded-2xl flex flex-col justify-between hover:border-blue-300 hover:shadow-md transition-all duration-300 group">
             <div>
               <h5 className="text-sm font-bold font-display text-slate-800 uppercase tracking-wide group-hover:text-blue-700 transition-colors">
-                {isMoto ? 'laws, gear & limits' : 'Laws, DWI & Safety'}
+                {isMoto ? 'laws, gear & limits' : isCdl ? 'CDL Laws, ELDT & Hazmat' : 'Laws, DWI & Safety'}
               </h5>
               <p className="text-[11.5px] text-slate-500 mt-1 leading-relaxed font-semibold">
                 {isMoto 
                   ? 'State helmet rules, eye exceptions, permit constraints, Implied Consent limits.'
+                  : isCdl
+                  ? 'FMCSA TPR registry mandate, 80% ELDT pass, 0.04% BAC, 4 placards, railroad stops, out-of-service orders.'
                   : 'Implied Consent BAC, under-21 zero tolerance (Not a Drop), Vanessa’s Law, seat belt mandates.'}
               </p>
             </div>
@@ -251,3 +283,4 @@ export default function DashboardView({
     </div>
   );
 }
+

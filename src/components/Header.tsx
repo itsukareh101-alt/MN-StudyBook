@@ -8,7 +8,18 @@ interface HeaderProps {
 }
 
 export default function Header({ view, setView, permitType }: HeaderProps) {
-  const isMoto = permitType === 'motorcycle';
+  const getBadgeInfo = () => {
+    switch (permitType) {
+      case 'motorcycle':
+        return { text: 'Class M Manual', style: 'bg-amber-600 text-amber-50 border-amber-500' };
+      case 'classD':
+        return { text: 'Class D Manual', style: 'bg-indigo-600 text-indigo-50 border-indigo-500' };
+      case 'cdl':
+        return { text: 'CDL & TPR Manual', style: 'bg-emerald-600 text-emerald-50 border-emerald-500' };
+    }
+  };
+
+  const badge = getBadgeInfo();
 
   return (
     <header id="header" className="bg-blue-900 text-white shadow-md sticky top-0 z-50 px-4 py-3.5 transition-all">
@@ -25,12 +36,8 @@ export default function Header({ view, setView, permitType }: HeaderProps) {
               <h1 className="text-sm md:text-md font-display font-medium uppercase tracking-wider text-white font-bold">
                 MN-StudyBook
               </h1>
-              <span className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded border uppercase transition-colors ${
-                isMoto
-                  ? 'bg-amber-600 text-amber-50 border-amber-500'
-                  : 'bg-indigo-600 text-indigo-50 border-indigo-500'
-              }`}>
-                {isMoto ? 'Class M Manual' : 'Class D Manual'}
+              <span className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded border uppercase transition-colors ${badge.style}`}>
+                {badge.text}
               </span>
             </div>
             <p className="text-[10px] md:text-xs text-blue-200">Minnesota DMV Permit Practice Companion</p>

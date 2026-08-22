@@ -20,13 +20,24 @@ export default function StatsHistoryView({ attempts, onResetStats, setView, perm
   const examsPassed = activeAttempts.filter(a => a.mode.includes('Exam') && a.status === 'PASSED').length;
   const passRate = examsTaken > 0 ? Math.round((examsPassed / examsTaken) * 100) : 0;
 
-  const currentLabel = permitType === 'motorcycle' ? '🏍️ Class M Motorcycle' : '🚗 Class D Passenger';
+  const getPermitLabel = (type: PermitType) => {
+    switch (type) {
+      case 'motorcycle':
+        return '🏍️ Class M Motorcycle';
+      case 'classD':
+        return '🚗 Class D Passenger';
+      case 'cdl':
+        return '🚛 CDL Commercial';
+    }
+  };
+
+  const currentLabel = getPermitLabel(permitType);
 
   return (
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row items-start justify-between gap-4 border-b border-slate-200 pb-4">
         <div>
-          <span className="inline-block text-xs font-mono text-blue-700 uppercase tracking-wider px-2.5 py-1 bg-blue-105 bg-blue-100 rounded-full border border-blue-200 font-bold">
+          <span className="inline-block text-xs font-mono text-blue-700 uppercase tracking-wider px-2.5 py-1 bg-blue-100 rounded-full border border-blue-200 font-bold">
             Personal Record Book • {currentLabel}
           </span>
           <h2 className="text-2xl font-display text-slate-800 mt-2 font-bold">
@@ -52,7 +63,7 @@ export default function StatsHistoryView({ attempts, onResetStats, setView, perm
         <div className="bg-white border-2 border-slate-200 rounded-2xl p-5 text-center space-y-1 shadow-sm hover:border-slate-300 transition-colors">
           <p className="text-xs text-slate-500 uppercase font-mono font-bold">Sessions Taken</p>
           <p className="text-3xl font-extrabold text-slate-805">{totalAttempted}</p>
-          <p className="text-[10px] text-slate-400 font-medium">{permitType === 'motorcycle' ? 'Class M' : 'Class D'} drills</p>
+          <p className="text-[10px] text-slate-400 font-medium">{permitType === 'motorcycle' ? 'Class M' : permitType === 'cdl' ? 'CDL / TPR' : 'Class D'} drills</p>
         </div>
         <div className="bg-white border-2 border-slate-200 rounded-2xl p-5 text-center space-y-1 shadow-sm hover:border-slate-300 transition-colors">
           <p className="text-xs text-slate-500 uppercase font-mono font-bold">Exam Simulator</p>
@@ -116,9 +127,13 @@ export default function StatsHistoryView({ attempts, onResetStats, setView, perm
                       <td className="p-4 font-mono font-medium text-slate-450">{item.date}</td>
                       <td className="p-4 font-semibold text-slate-700">
                         <span className={`inline-block px-2 py-0.5 rounded text-[10px] font-bold ${
-                          itemPermit === 'classD' ? 'bg-indigo-50 text-indigo-700 border border-indigo-150' : 'bg-amber-50 text-amber-700 border border-amber-100'
+                          itemPermit === 'classD' 
+                            ? 'bg-indigo-50 text-indigo-700 border border-indigo-150' 
+                            : itemPermit === 'cdl'
+                            ? 'bg-emerald-50 text-emerald-700 border border-emerald-150'
+                            : 'bg-amber-50 text-amber-700 border border-amber-100'
                         }`}>
-                          {itemPermit === 'classD' ? '🚗 Class D' : '🏍️ Class M'}
+                          {itemPermit === 'classD' ? '🚗 Class D' : itemPermit === 'cdl' ? '🚛 CDL' : '🏍️ Class M'}
                         </span>
                       </td>
                       <td className="p-4">

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { motorcycleQuestions } from './data/questions';
 import { driverQuestions } from './data/driverQuestions';
+import { cdlQuestions } from './data/cdlQuestions';
 import { Question, AppView, QuizMode, ExamAttempt, PermitType } from './types';
 
 // Modular Subcomponents
@@ -27,7 +28,7 @@ export default function App() {
   const [permitType, setPermitType] = useState<PermitType>(() => {
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem('mn_moto_permit_type');
-      if (saved === 'motorcycle' || saved === 'classD') {
+      if (saved === 'motorcycle' || saved === 'classD' || saved === 'cdl') {
         return saved as PermitType;
       }
     }
@@ -202,7 +203,11 @@ export default function App() {
     setMode(selectedMode);
     let filtered: Question[] = [];
     
-    const pool = permitType === 'motorcycle' ? motorcycleQuestions : driverQuestions;
+    const pool = permitType === 'motorcycle' 
+      ? motorcycleQuestions 
+      : permitType === 'cdl' 
+      ? cdlQuestions 
+      : driverQuestions;
 
     if (selectedMode === 'exam' || selectedMode === 'marathon') {
       // Full test has all questions directly
@@ -243,6 +248,62 @@ export default function App() {
           q.question.toLowerCase().includes('legal')
         );
       }
+    } else if (permitType === 'cdl') {
+      // Commercial Driver License (CDL) & FMCSA TPR Drills
+      if (selectedMode === 'controls') {
+        // Air Brakes & 7-Step Pre-Trip Inspection
+        filtered = pool.filter(q => 
+          q.question.toLowerCase().includes('brake') || 
+          q.question.toLowerCase().includes('air') || 
+          q.question.toLowerCase().includes('compressor') || 
+          q.question.toLowerCase().includes('governor') || 
+          q.question.toLowerCase().includes('gauge') || 
+          q.question.toLowerCase().includes('inspection') || 
+          q.question.toLowerCase().includes('pre-trip') || 
+          q.question.toLowerCase().includes('slack') || 
+          q.question.toLowerCase().includes('s-cam') || 
+          q.question.toLowerCase().includes('psi') || 
+          q.question.toLowerCase().includes('warning') || 
+          q.question.toLowerCase().includes('leak')
+        );
+      } else if (selectedMode === 'lanes') {
+        // Combination Vehicles, Space Management & Backing
+        filtered = pool.filter(q => 
+          q.question.toLowerCase().includes('combination') || 
+          q.question.toLowerCase().includes('space') || 
+          q.question.toLowerCase().includes('follow') || 
+          q.question.toLowerCase().includes('back') || 
+          q.question.toLowerCase().includes('trailer') || 
+          q.question.toLowerCase().includes('fifth wheel') || 
+          q.question.toLowerCase().includes('coupling') || 
+          q.question.toLowerCase().includes('kingpin') || 
+          q.question.toLowerCase().includes('glad hand') || 
+          q.question.toLowerCase().includes('rollover') || 
+          q.question.toLowerCase().includes('crack-the-whip') || 
+          q.question.toLowerCase().includes('off-track') || 
+          q.question.toLowerCase().includes('second')
+        );
+      } else if (selectedMode === 'laws') {
+        // CDL Regulations, ELDT / TPR Rules, Hazmat & Hours of Service
+        filtered = pool.filter(q => 
+          q.question.toLowerCase().includes('tpr') || 
+          q.question.toLowerCase().includes('eldt') || 
+          q.question.toLowerCase().includes('training provider') || 
+          q.question.toLowerCase().includes('registry') || 
+          q.question.toLowerCase().includes('fmcsa') || 
+          q.question.toLowerCase().includes('endorsement') || 
+          q.question.toLowerCase().includes('class a') || 
+          q.question.toLowerCase().includes('class b') || 
+          q.question.toLowerCase().includes('class c') || 
+          q.question.toLowerCase().includes('placard') || 
+          q.question.toLowerCase().includes('hazardous') || 
+          q.question.toLowerCase().includes('bac') || 
+          q.question.toLowerCase().includes('alcohol') || 
+          q.question.toLowerCase().includes('railroad') || 
+          q.question.toLowerCase().includes('hours of service') || 
+          q.question.toLowerCase().includes('out-of-service')
+        );
+      }
     } else {
       // Driver Class D filtered grills
       if (selectedMode === 'controls') {
@@ -252,9 +313,9 @@ export default function App() {
           q.question.toLowerCase().includes('signal') || 
           q.question.toLowerCase().includes('light') || 
           q.question.toLowerCase().includes('mark') || 
-          q.question.toLowerCase().includes('shape') ||
-          q.question.toLowerCase().includes('diamond') ||
-          q.question.toLowerCase().includes('yellow circle') ||
+          q.question.toLowerCase().includes('shape') || 
+          q.question.toLowerCase().includes('diamond') || 
+          q.question.toLowerCase().includes('yellow circle') || 
           q.question.toLowerCase().includes('octagonal')
         );
       } else if (selectedMode === 'lanes') {
@@ -267,7 +328,7 @@ export default function App() {
           q.question.toLowerCase().includes('roundabout') || 
           q.question.toLowerCase().includes('follow') || 
           q.question.toLowerCase().includes('park') || 
-          q.question.toLowerCase().includes('curb') ||
+          q.question.toLowerCase().includes('curb') || 
           q.question.toLowerCase().includes('alley')
         );
       } else if (selectedMode === 'laws') {
@@ -280,13 +341,13 @@ export default function App() {
           q.question.toLowerCase().includes('insurance') || 
           q.question.toLowerCase().includes('seat belt') || 
           q.question.toLowerCase().includes('vanessa') || 
-          q.question.toLowerCase().includes('not a drop') ||
-          q.question.toLowerCase().includes('drop') ||
-          q.question.toLowerCase().includes('cell') ||
-          q.question.toLowerCase().includes('mobile') ||
-          q.question.toLowerCase().includes('hands-free') ||
-          q.question.toLowerCase().includes('move over') ||
-          q.question.toLowerCase().includes('report') ||
+          q.question.toLowerCase().includes('not a drop') || 
+          q.question.toLowerCase().includes('drop') || 
+          q.question.toLowerCase().includes('cell') || 
+          q.question.toLowerCase().includes('mobile') || 
+          q.question.toLowerCase().includes('hands-free') || 
+          q.question.toLowerCase().includes('move over') || 
+          q.question.toLowerCase().includes('report') || 
           q.question.toLowerCase().includes('flee')
         );
       }
@@ -429,11 +490,11 @@ export default function App() {
         {/* License Type Picker - Beautiful, responsive segment navigation selection */}
         {view !== 'quiz' && view !== 'disclaimer' && (
           <div className="flex justify-center mb-6 animate-fade-in">
-            <div className="bg-white p-1 rounded-2xl border-2 border-slate-205/60 border-slate-200 shadow-sm flex items-center gap-1">
+            <div className="bg-white p-1 rounded-2xl border-2 border-slate-200 shadow-sm flex flex-wrap items-center justify-center gap-1">
               <button
                 id="opt-license-moto"
                 onClick={() => handleSetPermitType('motorcycle')}
-                className={`px-5 py-2.5 rounded-xl text-xs font-display font-medium tracking-wider transition-all duration-200 cursor-pointer flex items-center gap-2 active:scale-97 ${
+                className={`px-4 py-2.5 rounded-xl text-xs font-display font-medium tracking-wider transition-all duration-200 cursor-pointer flex items-center gap-2 active:scale-97 ${
                   permitType === 'motorcycle'
                     ? 'bg-amber-600 text-white font-bold shadow-sm'
                     : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50'
@@ -444,13 +505,24 @@ export default function App() {
               <button
                 id="opt-license-driver"
                 onClick={() => handleSetPermitType('classD')}
-                className={`px-5 py-2.5 rounded-xl text-xs font-display font-medium tracking-wider transition-all duration-200 cursor-pointer flex items-center gap-2 active:scale-97 ${
+                className={`px-4 py-2.5 rounded-xl text-xs font-display font-medium tracking-wider transition-all duration-200 cursor-pointer flex items-center gap-2 active:scale-97 ${
                   permitType === 'classD'
-                    ? 'bg-indigo-650 bg-indigo-600 text-white font-bold shadow-sm'
+                    ? 'bg-indigo-600 text-white font-bold shadow-sm'
                     : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50'
                 }`}
               >
                 <span>🚗 Class D Driver</span>
+              </button>
+              <button
+                id="opt-license-cdl"
+                onClick={() => handleSetPermitType('cdl')}
+                className={`px-4 py-2.5 rounded-xl text-xs font-display font-medium tracking-wider transition-all duration-200 cursor-pointer flex items-center gap-2 active:scale-97 ${
+                  permitType === 'cdl'
+                    ? 'bg-emerald-600 text-white font-bold shadow-sm'
+                    : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50'
+                }`}
+              >
+                <span>🚛 CDL Commercial &amp; TPR</span>
               </button>
             </div>
           </div>
@@ -572,17 +644,25 @@ export default function App() {
               </div>
             </div>
           </div>
-          <div className="flex gap-4 shrink-0 font-mono text-[10px] font-semibold text-slate-500">
+          <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 shrink-0 font-mono text-[10px] font-semibold text-slate-500">
              <button onClick={() => setView('disclaimer')} className="text-blue-600 hover:text-blue-800 hover:underline cursor-pointer">
               Disclaimer &amp; Rules
              </button>
             <span>•</span>
-            <a href="https://assets.dps.mn.gov/files/dvs/motorcycle-manual.pdf" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:text-blue-800 hover:underline text-blue-650">
+            <a href="https://assets.dps.mn.gov/files/dvs/motorcycle-manual.pdf" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:text-blue-800 hover:underline">
               Class M Manual
             </a>
             <span>•</span>
-            <a href="https://assets.dps.mn.gov/files/dvs/dvs-class-d-drivers-manual-english.pdf" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:text-blue-800 hover:underline text-blue-650">
-              Class D Driver Manual
+            <a href="https://assets.dps.mn.gov/files/dvs/dvs-class-d-drivers-manual-english.pdf" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:text-blue-800 hover:underline">
+              Class D Manual
+            </a>
+            <span>•</span>
+            <a href="https://assets.dps.mn.gov/files/dvs/dvs-commercial-drivers-license-manual.pdf" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:text-blue-800 hover:underline">
+              CDL Manual
+            </a>
+            <span>•</span>
+            <a href="https://assets.dps.mn.gov/files/dvs/TPR-Launch-Feb2022.pdf" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:text-blue-800 hover:underline">
+              TPR / ELDT Guide
             </a>
           </div>
         </div>

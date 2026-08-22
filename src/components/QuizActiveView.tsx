@@ -110,7 +110,11 @@ export default function QuizActiveView({
           </span>
           <span className="w-1.5 h-1.5 rounded-full bg-blue-600"></span>
           <span className="text-[11px] text-slate-500 font-mono font-medium">
-            {permitType === 'motorcycle' ? 'Minnesota Safety Code' : 'Minnesota Driver’s Manual'}
+            {permitType === 'motorcycle' 
+              ? 'Minnesota Motorcycle Manual' 
+              : permitType === 'cdl' 
+              ? 'Minnesota CDL Manual & TPR Guidelines' 
+              : 'Minnesota Driver’s Manual'}
           </span>
         </div>
 
