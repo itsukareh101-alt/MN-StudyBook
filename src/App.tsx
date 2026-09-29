@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { motorcycleQuestions } from './data/questions';
+import { motorcycleQuestions } from './data/motoquestions';
 import { driverQuestions } from './data/driverQuestions';
 import { cdlQuestions } from './data/cdlQuestions';
 import { Question, AppView, QuizMode, ExamAttempt, PermitType } from './types';

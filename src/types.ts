@@ -1,4 +1,4 @@
-export { type Question } from './data/questions';
+export { type Question } from './data/motoquestions';
 
 export interface ExamAttempt {
   id: string;
