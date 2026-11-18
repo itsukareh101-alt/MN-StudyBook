@@ -34,7 +34,7 @@ export default function DashboardView({
         badge: 'Minnesota Class-M Manual Study System',
         title: 'Minnesota Class M',
         subtitle: 'Permit Training Deck',
-        description: 'Practice with a rigorous database of motorcycle knowledge questions referencing the Minnesota system guidelines. Failures occur instantly upon receiving 8 incorrect selections in strict mode, simulating real exam constraints.'
+        description: 'Practice with a rigorous database of motorcycle knowledge questions referencing the Minnesota system guidelines. Failures occur instantly upon receiving 7 incorrect selections in strict mode, simulating real exam constraints.'
       };
     } else if (permitType === 'classD') {
       return {
@@ -76,7 +76,7 @@ export default function DashboardView({
                   {isMoto ? 'Motorcycle' : isCdl ? 'CDL Commercial' : 'Driver'} Exam Terminated Automatically
                 </h4>
                 <p className="text-xs leading-relaxed text-slate-600 mt-1 font-medium">
-                  In accordance with standard state-equivalent guidelines, hitting <strong className="text-rose-600 font-bold text-pink-700">8 strikes (incorrect answers)</strong> results in immediate failure to simulate real licensing threshold parameters. Keep study drilling and try again!
+                  In accordance with standard state-equivalent guidelines, hitting <strong className="text-rose-600 font-bold text-pink-700">7 strikes (incorrect answers)</strong> results in immediate failure to simulate real licensing threshold parameters. Keep study drilling and try again!
                 </p>
               </div>
             </div>
@@ -131,17 +131,17 @@ export default function DashboardView({
                 Real Mock Exam Simulator
               </h4>
               <p className="text-xs text-slate-550 mt-2 leading-relaxed font-medium">
-                Simulate the real {isMoto ? 'motorcycle' : isCdl ? 'commercial driver' : 'driver'} state knowledge test environment. If you log 8 incorrect answers, the test ends instantly, registering a simulated license attempt failure.
+                Simulate the real {isMoto ? 'motorcycle' : isCdl ? 'commercial driver' : 'driver'} state knowledge test environment. If you log 7 incorrect answers, the test ends instantly, registering a simulated license attempt failure.
               </p>
               <ul className="mt-4 space-y-1.5 text-xs text-slate-600 font-mono">
                 <li className="flex items-center gap-2 font-medium">
-                  <span className="text-rose-600 font-bold">✕</span> Auto-fail limit: 8 incorrects
+                  <span className="text-rose-600 font-bold">✕</span> Auto-fail limit: 7 incorrects
                 </li>
                 <li className="flex items-center gap-2">
-                  <span className="text-blue-600 font-bold">✓</span> Total 40 randomly pooled questions
+                  <span className="text-blue-600 font-bold">✓</span> Total 30 randomly pooled questions
                 </li>
                 <li className="flex items-center gap-2">
-                  <span className="text-blue-600 font-bold">✓</span> Minimum 80% (32 correct) to clear
+                  <span className="text-blue-600 font-bold">✓</span> Minimum 80% (24 correct) to clear
                 </li>
               </ul>
             </div>

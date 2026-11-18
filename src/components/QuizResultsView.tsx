@@ -19,7 +19,8 @@ export default function QuizResultsView({
 }: QuizResultsViewProps) {
   const percentage = Math.round((score / totalQuestions) * 100);
   const isExam = mode === 'exam';
-  const passed = score >= 32;
+  const passingScore = Math.ceil(totalQuestions * 0.8);
+  const passed = score >= passingScore;
 
   return (
     <motion.div
@@ -86,7 +87,7 @@ export default function QuizResultsView({
         <div className="max-w-md mx-auto p-4 bg-rose-50 rounded-2xl border border-rose-200 text-xs text-rose-900 leading-relaxed font-medium text-left flex gap-3">
           <AlertCircle className="w-5 h-5 text-rose-600 shrink-0 mt-0.5" />
           <p>
-            <strong className="text-rose-950 font-bold">Minnesota state DVS notice:</strong> To clear the motorcycle endorsement exam, you must answer a minimum of <strong>32 out of 40</strong> questions correctly. Focus your reviews on key riding controls and state laws!
+            <strong className="text-rose-950 font-bold">Minnesota state DVS notice:</strong> To clear the mock exam, you must answer a minimum of <strong>{passingScore} out of {totalQuestions}</strong> questions correctly (80%). Focus your reviews on key controls and state laws!
           </p>
         </div>
       )}

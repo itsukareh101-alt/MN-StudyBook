@@ -68,12 +68,12 @@ export default function StatsHistoryView({ attempts, onResetStats, setView, perm
         <div className="bg-white border-2 border-slate-200 rounded-2xl p-5 text-center space-y-1 shadow-sm hover:border-slate-300 transition-colors">
           <p className="text-xs text-slate-500 uppercase font-mono font-bold">Exam Simulator</p>
           <p className="text-3xl font-extrabold text-blue-700">{examsTaken}</p>
-          <p className="text-[10px] text-slate-400 font-medium">40-Question trials</p>
+          <p className="text-[10px] text-slate-400 font-medium">30-Question trials</p>
         </div>
         <div className="bg-white border-2 border-slate-200 rounded-2xl p-5 text-center space-y-1 shadow-sm hover:border-slate-300 transition-colors">
           <p className="text-xs text-slate-500 uppercase font-mono font-bold">Exams Cleared</p>
           <p className="text-3xl font-extrabold text-emerald-600">{examsPassed}</p>
-          <p className="text-[10px] text-slate-400 font-medium">Score of 32 or more (80%)</p>
+          <p className="text-[10px] text-slate-400 font-medium">Score of 24 or more (80%)</p>
         </div>
         <div className="bg-white border-2 border-slate-200 rounded-2xl p-5 text-center space-y-1 shadow-sm hover:border-slate-300 transition-colors">
           <p className="text-xs text-slate-500 uppercase font-mono font-bold">Exams Clear Rate</p>

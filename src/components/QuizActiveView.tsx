@@ -89,7 +89,7 @@ export default function QuizActiveView({
       {mode === 'exam' && strikes > 0 && (
         <div className="px-4 py-2 flex items-center justify-between text-xs bg-rose-50 border border-rose-100/70 text-rose-700 rounded-2xl animate-fade-in">
           <span className="font-mono font-bold uppercase text-[10px]">Strike Warning:</span>
-          <span className="font-mono font-bold">{strikes} of 8 errors fail threshold</span>
+          <span className="font-mono font-bold">{strikes} of 7 errors fail threshold</span>
         </div>
       )}
 

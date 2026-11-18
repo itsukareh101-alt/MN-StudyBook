@@ -377,10 +377,10 @@ export default function App() {
       shuffled[j] = temp;
     }
 
-    // Limit drills to 10 questions, exams to exactly 40 questions, else keep all (marathon)
+    // Limit drills to 10 questions, exams to exactly 30 questions, else keep all (marathon)
     const rawSelectedQuestions = (selectedMode !== 'exam' && selectedMode !== 'marathon')
       ? shuffled.slice(0, 10)
-      : (selectedMode === 'exam' ? shuffled.slice(0, 40) : shuffled);
+      : (selectedMode === 'exam' ? shuffled.slice(0, 30) : shuffled);
 
     // Dynamic Option Shuffling to ensure the correct answer is not always A (index 0)
     const finalQuestions = rawSelectedQuestions.map(q => {
@@ -424,8 +424,8 @@ export default function App() {
       setStrikes(newStrikes);
       
       // AUTO FAIL SECURITY CHECK FOR REAL EXAM STYLE
-      // Fail on 8th strike
-      if (mode === 'exam' && newStrikes >= 8) {
+      // Fail on 7th strike (more than 6 incorrect makes 24/30 = 80% unreachable)
+      if (mode === 'exam' && newStrikes >= 7) {
         setAutoRevocationTriggered(true);
         logAttempt(score, newStrikes, activeQuestions.length, 'FAILED');
       }
@@ -444,7 +444,8 @@ export default function App() {
       setIsAnswerChecked(false);
     } else {
       // Reached the end successfully!
-      const finalStatus = (mode === 'exam' && score < 32) ? 'FAILED' : 'PASSED';
+      const passingScore = Math.ceil(activeQuestions.length * 0.8);
+      const finalStatus = (mode === 'exam' && score < passingScore) ? 'FAILED' : 'PASSED';
       setQuizFinished(true);
       logAttempt(score, strikes, activeQuestions.length, mode === 'exam' ? finalStatus : 'COMPLETED');
     }
