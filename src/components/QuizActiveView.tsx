@@ -9,7 +9,7 @@ import {
   XCircle,
   Sliders
 } from 'lucide-react';
-import { Question, QuizMode, PermitType } from '../types';
+import { Question, QuizMode, PermitType, Language } from '../types';
 
 interface QuizActiveViewProps {
   currentIndex: number;
@@ -27,6 +27,7 @@ interface QuizActiveViewProps {
   permitType: PermitType;
   voiceVolume: number;
   setVoiceVolume: (v: number) => void;
+  language: Language;
 }
 
 export default function QuizActiveView({
@@ -44,14 +45,36 @@ export default function QuizActiveView({
   onNextQuestion,
   permitType,
   voiceVolume,
-  setVoiceVolume
+  setVoiceVolume,
+  language
 }: QuizActiveViewProps) {
   const [showVoiceSettings, setShowVoiceSettings] = useState(false);
   const currentQuestion = activeQuestions[currentIndex];
   if (!currentQuestion) return null;
 
+  const isEs = language === 'es';
   const totalQuestions = activeQuestions.length;
   const progressPercent = ((currentIndex + 1) / totalQuestions) * 100;
+
+  const getModeBadge = () => {
+    if (isEs) {
+      if (mode === 'exam') return '🚨 EXAMEN DE PRÁCTICA';
+      if (mode === 'marathon') return '📚 MARATÓN DE ESTUDIO';
+      return '🎯 PRÁCTICA TEMÁTICA';
+    }
+    if (mode === 'exam') return '🚨 PRACTICE EXAM';
+    if (mode === 'marathon') return '📚 STUDY MARATHON';
+    return '🎯 SKILL DRILL';
+  };
+
+  const getTopicLabel = () => {
+    if (!isEs) return mode === 'exam' ? 'Exam Pool' : mode.toUpperCase();
+    if (mode === 'exam') return 'Banco de Examen';
+    if (mode === 'marathon') return 'MARATÓN';
+    if (mode === 'controls') return 'SEÑALES';
+    if (mode === 'lanes') return 'PASO Y VELOCIDAD';
+    return 'LEYES';
+  };
 
   return (
     <div className="space-y-4">
@@ -59,18 +82,18 @@ export default function QuizActiveView({
       <div className="flex items-center justify-between px-2 text-xs">
         <div>
           <span className="text-[10px] font-mono text-slate-400 font-bold uppercase tracking-wider">
-            {mode === 'exam' ? '🚨 PRACTICE EXAM' : mode === 'marathon' ? '📚 STUDY MARATHON' : '🎯 SKILL DRILL'}
+            {getModeBadge()}
           </span>
         </div>
         <div className="flex items-center gap-4">
           <span className="font-mono text-slate-600 font-bold bg-slate-100 px-3 py-1 rounded-xl border border-slate-200">
-            Question {currentIndex + 1} of {totalQuestions}
+            {isEs ? `Pregunta ${currentIndex + 1} de ${totalQuestions}` : `Question ${currentIndex + 1} of ${totalQuestions}`}
           </span>
           <button
             onClick={onQuit}
             className="p-1.5 px-3 bg-rose-50 hover:bg-rose-100 border border-rose-100 hover:border-rose-200 rounded-xl text-[10px] uppercase font-mono tracking-wider text-rose-600 font-bold transition-all cursor-pointer active:scale-97"
           >
-            Quit
+            {isEs ? 'Salir' : 'Quit'}
           </button>
         </div>
       </div>
@@ -88,8 +111,12 @@ export default function QuizActiveView({
       {/* EXAM STRIKES (Only active for Real Exam) */}
       {mode === 'exam' && strikes > 0 && (
         <div className="px-4 py-2 flex items-center justify-between text-xs bg-rose-50 border border-rose-100/70 text-rose-700 rounded-2xl animate-fade-in">
-          <span className="font-mono font-bold uppercase text-[10px]">Strike Warning:</span>
-          <span className="font-mono font-bold">{strikes} of 7 errors fail threshold</span>
+          <span className="font-mono font-bold uppercase text-[10px]">
+            {isEs ? 'Aviso de errores:' : 'Strike Warning:'}
+          </span>
+          <span className="font-mono font-bold">
+            {isEs ? `${strikes} de 7 errores permitidos` : `${strikes} of 7 errors fail threshold`}
+          </span>
         </div>
       )}
 
@@ -104,13 +131,15 @@ export default function QuizActiveView({
       >
         
         {/* Header line */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           <span className="text-[11px] font-mono uppercase bg-blue-50 text-blue-700 px-3 py-1 rounded-full border border-blue-100 font-bold">
-            Topic: {mode === 'exam' ? 'Exam Pool' : mode.toUpperCase()}
+            {isEs ? `Tema: ${getTopicLabel()}` : `Topic: ${getTopicLabel()}`}
           </span>
           <span className="w-1.5 h-1.5 rounded-full bg-blue-600"></span>
           <span className="text-[11px] text-slate-500 font-mono font-medium">
-            {permitType === 'motorcycle' 
+            {isEs
+              ? 'Manual del Conductor de Minnesota (Español)'
+              : permitType === 'motorcycle' 
               ? 'Minnesota Motorcycle Manual' 
               : permitType === 'cdl' 
               ? 'Minnesota CDL Manual & TPR Guidelines' 
@@ -131,7 +160,11 @@ export default function QuizActiveView({
                   ? 'bg-blue-100 border-blue-300 text-blue-700' 
                   : 'bg-slate-50 border-slate-200 text-slate-500 hover:bg-blue-50 hover:border-blue-200 hover:text-blue-600'
               }`}
-              title={isSpeaking ? "Stop reading" : "Read question aloud"}
+              title={
+                isEs
+                  ? (isSpeaking ? 'Detener lectura' : 'Leer pregunta en voz alta')
+                  : (isSpeaking ? 'Stop reading' : 'Read question aloud')
+              }
             >
               {isSpeaking ? <VolumeX className="w-5 h-5 animate-pulse" /> : <Volume2 className="w-5 h-5" />}
             </button>
@@ -144,10 +177,10 @@ export default function QuizActiveView({
                   ? 'bg-blue-50 border-blue-200 text-blue-700'
                   : 'bg-white border-slate-200 text-slate-400 hover:text-slate-600 hover:bg-slate-50'
               }`}
-              title="Tune reader voice (soften/speed)"
+              title={isEs ? 'Ajustar lector de voz' : 'Tune reader voice (soften/speed)'}
             >
               <Sliders className="w-3 h-3" />
-              <span>{showVoiceSettings ? "Close" : "Tune"}</span>
+              <span>{isEs ? (showVoiceSettings ? 'Cerrar' : 'Voz') : (showVoiceSettings ? 'Close' : 'Tune')}</span>
             </button>
           </div>
         </div>
@@ -165,10 +198,10 @@ export default function QuizActiveView({
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-1.5 text-xs text-slate-700 font-bold font-mono uppercase">
                   <Sliders className="w-3.5 h-3.5 text-slate-500" />
-                  <span>Acoustic Reader Control</span>
+                  <span>{isEs ? 'Control de Lector Acústico' : 'Acoustic Reader Control'}</span>
                 </div>
                 <span className="text-[9px] font-mono px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-100 font-bold">
-                  Autosaved
+                  {isEs ? 'Guardado automático' : 'Autosaved'}
                 </span>
               </div>
               
@@ -176,8 +209,13 @@ export default function QuizActiveView({
               <div className="space-y-3.5 pt-1">
                 <div className="space-y-1">
                   <div className="flex justify-between text-xs font-semibold text-slate-600">
-                    <span className="flex items-center gap-1.5">🔊 Voice Volume: <span className="font-mono text-[10px] bg-slate-200 px-1.5 py-0.5 rounded">{(voiceVolume * 100).toFixed(0)}%</span></span>
-                    <span className="text-slate-400 text-[10px]">Adjust to soften</span>
+                    <span className="flex items-center gap-1.5">
+                      🔊 {isEs ? 'Volumen de Voz:' : 'Voice Volume:'}{' '}
+                      <span className="font-mono text-[10px] bg-slate-200 px-1.5 py-0.5 rounded">{(voiceVolume * 100).toFixed(0)}%</span>
+                    </span>
+                    <span className="text-slate-400 text-[10px]">
+                      {isEs ? 'Ajustar para suavizar' : 'Adjust to soften'}
+                    </span>
                   </div>
                   <input
                     id="slider-voice-volume"
@@ -257,7 +295,9 @@ export default function QuizActiveView({
               <div className="flex items-center gap-1.5 text-xs text-blue-700 font-mono font-bold uppercase">
                 <ShieldCheck className="w-4.5 h-4.5 text-blue-700" />
                 <span>
-                  {permitType === 'motorcycle' ? 'Minnesota Safety Rule Citation' : 'Minnesota Traffic Law Citation'}
+                  {isEs
+                    ? 'Cita de Ley de Tránsito de Minnesota'
+                    : permitType === 'motorcycle' ? 'Minnesota Safety Rule Citation' : 'Minnesota Traffic Law Citation'}
                 </span>
               </div>
               <p className="text-xs text-slate-650 leading-relaxed font-semibold">
@@ -271,7 +311,9 @@ export default function QuizActiveView({
         <div className="pt-4 border-t border-slate-200 flex justify-between items-center gap-3">
           <div>
             {!isAnswerChecked && (
-              <span className="text-xs text-slate-400 font-medium">Step through options and select to lock-in your answer</span>
+              <span className="text-xs text-slate-400 font-medium">
+                {isEs ? 'Selecciona una opción para confirmar tu respuesta' : 'Step through options and select to lock-in your answer'}
+              </span>
             )}
           </div>
           
@@ -281,7 +323,11 @@ export default function QuizActiveView({
               onClick={onNextQuestion}
               className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold font-display rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer shadow-sm ml-auto active:scale-97 hover:shadow"
             >
-              <span>{autoRevocationTriggered ? "Fail & Quit" : (currentIndex + 1 === totalQuestions ? "Finish Test" : "Next Question")}</span>
+              <span>
+                {isEs
+                  ? (autoRevocationTriggered ? 'Fallar y Salir' : (currentIndex + 1 === totalQuestions ? 'Finalizar Prueba' : 'Siguiente Pregunta'))
+                  : (autoRevocationTriggered ? 'Fail & Quit' : (currentIndex + 1 === totalQuestions ? 'Finish Test' : 'Next Question'))}
+              </span>
               <ArrowRight className="w-4 h-4" />
             </button>
           )}

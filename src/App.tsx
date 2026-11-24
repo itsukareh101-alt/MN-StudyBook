@@ -2,8 +2,9 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { motorcycleQuestions } from './data/motoquestions';
 import { driverQuestions } from './data/driverQuestions';
+import { driverQuestionsSpanish } from './data/driverQuestionsSpanish';
 import { cdlQuestions } from './data/cdlQuestions';
-import { Question, AppView, QuizMode, ExamAttempt, PermitType } from './types';
+import { Question, AppView, QuizMode, ExamAttempt, PermitType, Language } from './types';
 
 // Modular Subcomponents
 import Header from './components/Header';
@@ -25,8 +26,22 @@ export default function App() {
   });
   
   const [mode, setMode] = useState<QuizMode>('marathon');
+  const [language, setLanguage] = useState<Language>(() => {
+    if (typeof window !== 'undefined') {
+      const savedLang = localStorage.getItem('mn_permit_language');
+      if (savedLang === 'es' || savedLang === 'en') {
+        return savedLang;
+      }
+    }
+    return 'en';
+  });
+
   const [permitType, setPermitType] = useState<PermitType>(() => {
     if (typeof window !== 'undefined') {
+      const savedLang = localStorage.getItem('mn_permit_language');
+      if (savedLang === 'es') {
+        return 'classD';
+      }
       const saved = localStorage.getItem('mn_moto_permit_type');
       if (saved === 'motorcycle' || saved === 'classD' || saved === 'cdl') {
         return saved as PermitType;
@@ -36,9 +51,34 @@ export default function App() {
   });
 
   const handleSetPermitType = (type: PermitType) => {
+    if (language === 'es' && type !== 'classD') return;
     setPermitType(type);
     if (typeof window !== 'undefined') {
       localStorage.setItem('mn_moto_permit_type', type);
+    }
+  };
+
+  const handleToggleLanguage = (lang: Language) => {
+    setLanguage(lang);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('mn_permit_language', lang);
+      if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+      }
+    }
+    setIsSpeaking(false);
+
+    if (lang === 'es') {
+      setPermitType('classD');
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('mn_moto_permit_type', 'classD');
+      }
+    }
+
+    if (view === 'quiz') {
+      setQuizFinished(false);
+      setAutoRevocationTriggered(false);
+      setView('home');
     }
   };
   
@@ -79,6 +119,13 @@ export default function App() {
       localStorage.setItem('mn_permit_voice_volume', v.toString());
     }
   };
+
+  // Keep HTML lang attribute in sync with active language
+  useEffect(() => {
+    if (typeof document !== 'undefined') {
+      document.documentElement.lang = language;
+    }
+  }, [language]);
 
   // Pre-fetch SpeechSynthesis voices on startup to prevent latency on subsequent clicks
   useEffect(() => {
@@ -154,22 +201,39 @@ export default function App() {
         
         // Inspect available voices on the browser to choose a premium, warm, friendly human voice
         const voices = window.speechSynthesis.getVoices();
-        const enVoices = voices.filter(v => v.lang.toLowerCase().startsWith('en'));
-        
-        const preferredVoice = 
-          enVoices.find(v => v.name.toLowerCase().includes('natural')) || // Edge Natural (unbeatable)
-          enVoices.find(v => v.name.toLowerCase().includes('aria')) || // Soft Microsoft Online
-          enVoices.find(v => v.name.toLowerCase().includes('jenny')) || // Jenny Natural voice
-          enVoices.find(v => v.name.toLowerCase().includes('samantha')) || // macOS Soft Female
-          enVoices.find(v => v.name.toLowerCase().includes('google')) || // Google Cloud high-quality TTS
-          enVoices.find(v => v.name.toLowerCase().includes('zira')) || // Windows Soft Female
-          enVoices.find(v => v.name.toLowerCase().includes('hazel')) ||
-          enVoices.find(v => v.name.toLowerCase().includes('susan')) ||
-          enVoices.find(v => v.lang.includes('US') || v.lang.includes('us') || v.lang.includes('GB')) ||
-          enVoices[0]; // Base English fallback
+        if (language === 'es') {
+          utterance.lang = 'es-US';
+          const esVoices = voices.filter(v => v.lang.toLowerCase().startsWith('es'));
+          const preferredEsVoice =
+            esVoices.find(v => v.name.toLowerCase().includes('natural')) ||
+            esVoices.find(v => v.name.toLowerCase().includes('google')) ||
+            esVoices.find(v => v.name.toLowerCase().includes('paulina')) ||
+            esVoices.find(v => v.name.toLowerCase().includes('monica')) ||
+            esVoices.find(v => v.lang.toLowerCase().includes('us') || v.lang.toLowerCase().includes('mx')) ||
+            esVoices[0];
+
+          if (preferredEsVoice) {
+            utterance.voice = preferredEsVoice;
+          }
+        } else {
+          utterance.lang = 'en-US';
+          const enVoices = voices.filter(v => v.lang.toLowerCase().startsWith('en'));
           
-        if (preferredVoice) {
-          utterance.voice = preferredVoice;
+          const preferredVoice = 
+            enVoices.find(v => v.name.toLowerCase().includes('natural')) || // Edge Natural (unbeatable)
+            enVoices.find(v => v.name.toLowerCase().includes('aria')) || // Soft Microsoft Online
+            enVoices.find(v => v.name.toLowerCase().includes('jenny')) || // Jenny Natural voice
+            enVoices.find(v => v.name.toLowerCase().includes('samantha')) || // macOS Soft Female
+            enVoices.find(v => v.name.toLowerCase().includes('google')) || // Google Cloud high-quality TTS
+            enVoices.find(v => v.name.toLowerCase().includes('zira')) || // Windows Soft Female
+            enVoices.find(v => v.name.toLowerCase().includes('hazel')) ||
+            enVoices.find(v => v.name.toLowerCase().includes('susan')) ||
+            enVoices.find(v => v.lang.includes('US') || v.lang.includes('us') || v.lang.includes('GB')) ||
+            enVoices[0]; // Base English fallback
+            
+          if (preferredVoice) {
+            utterance.voice = preferredVoice;
+          }
         }
         
         // Fine-tuning elements to ensure a soft, warm, relaxed, and fully natural speaking pace
@@ -203,11 +267,12 @@ export default function App() {
     setMode(selectedMode);
     let filtered: Question[] = [];
     
-    const pool = permitType === 'motorcycle' 
+    const activePermit = language === 'es' ? 'classD' : permitType;
+    const pool = activePermit === 'motorcycle' 
       ? motorcycleQuestions 
-      : permitType === 'cdl' 
+      : activePermit === 'cdl' 
       ? cdlQuestions 
-      : driverQuestions;
+      : (language === 'es' ? driverQuestionsSpanish : driverQuestions);
 
     if (selectedMode === 'exam' || selectedMode === 'marathon') {
       // Full test has all questions directly
@@ -305,52 +370,66 @@ export default function App() {
         );
       }
     } else {
-      // Driver Class D filtered grills
+      // Driver Class D filtered drills (categorized consistently across English & Spanish by question ID)
+      let matchingIds = new Set<number>();
       if (selectedMode === 'controls') {
         // Signs & signals
-        filtered = pool.filter(q => 
-          q.question.toLowerCase().includes('sign') || 
-          q.question.toLowerCase().includes('signal') || 
-          q.question.toLowerCase().includes('light') || 
-          q.question.toLowerCase().includes('mark') || 
-          q.question.toLowerCase().includes('shape') || 
-          q.question.toLowerCase().includes('diamond') || 
-          q.question.toLowerCase().includes('yellow circle') || 
-          q.question.toLowerCase().includes('octagonal')
+        matchingIds = new Set(
+          driverQuestions
+            .filter(q => 
+              q.question.toLowerCase().includes('sign') || 
+              q.question.toLowerCase().includes('signal') || 
+              q.question.toLowerCase().includes('light') || 
+              q.question.toLowerCase().includes('mark') || 
+              q.question.toLowerCase().includes('shape') || 
+              q.question.toLowerCase().includes('diamond') || 
+              q.question.toLowerCase().includes('yellow circle') || 
+              q.question.toLowerCase().includes('octagonal')
+            )
+            .map(q => q.id)
         );
       } else if (selectedMode === 'lanes') {
         // Speed & Right-of-way
-        filtered = pool.filter(q => 
-          q.question.toLowerCase().includes('speed') || 
-          q.question.toLowerCase().includes('right-of-way') || 
-          q.question.toLowerCase().includes('yield') || 
-          q.question.toLowerCase().includes('uncontrolled') || 
-          q.question.toLowerCase().includes('roundabout') || 
-          q.question.toLowerCase().includes('follow') || 
-          q.question.toLowerCase().includes('park') || 
-          q.question.toLowerCase().includes('curb') || 
-          q.question.toLowerCase().includes('alley')
+        matchingIds = new Set(
+          driverQuestions
+            .filter(q => 
+              q.question.toLowerCase().includes('speed') || 
+              q.question.toLowerCase().includes('right-of-way') || 
+              q.question.toLowerCase().includes('yield') || 
+              q.question.toLowerCase().includes('uncontrolled') || 
+              q.question.toLowerCase().includes('roundabout') || 
+              q.question.toLowerCase().includes('follow') || 
+              q.question.toLowerCase().includes('park') || 
+              q.question.toLowerCase().includes('curb') || 
+              q.question.toLowerCase().includes('alley')
+            )
+            .map(q => q.id)
         );
       } else if (selectedMode === 'laws') {
         // Laws, DWI & Safety (Implied Consent, Not a Drop, Vanessa's Law, Ted Foss, seatbelt)
-        filtered = pool.filter(q => 
-          q.question.toLowerCase().includes('law') || 
-          q.question.toLowerCase().includes('alcohol') || 
-          q.question.toLowerCase().includes('bac') || 
-          q.question.toLowerCase().includes('consent') || 
-          q.question.toLowerCase().includes('insurance') || 
-          q.question.toLowerCase().includes('seat belt') || 
-          q.question.toLowerCase().includes('vanessa') || 
-          q.question.toLowerCase().includes('not a drop') || 
-          q.question.toLowerCase().includes('drop') || 
-          q.question.toLowerCase().includes('cell') || 
-          q.question.toLowerCase().includes('mobile') || 
-          q.question.toLowerCase().includes('hands-free') || 
-          q.question.toLowerCase().includes('move over') || 
-          q.question.toLowerCase().includes('report') || 
-          q.question.toLowerCase().includes('flee')
+        matchingIds = new Set(
+          driverQuestions
+            .filter(q => 
+              q.question.toLowerCase().includes('law') || 
+              q.question.toLowerCase().includes('alcohol') || 
+              q.question.toLowerCase().includes('bac') || 
+              q.question.toLowerCase().includes('consent') || 
+              q.question.toLowerCase().includes('insurance') || 
+              q.question.toLowerCase().includes('seat belt') || 
+              q.question.toLowerCase().includes('vanessa') || 
+              q.question.toLowerCase().includes('not a drop') || 
+              q.question.toLowerCase().includes('drop') || 
+              q.question.toLowerCase().includes('cell') || 
+              q.question.toLowerCase().includes('mobile') || 
+              q.question.toLowerCase().includes('hands-free') || 
+              q.question.toLowerCase().includes('move over') || 
+              q.question.toLowerCase().includes('report') || 
+              q.question.toLowerCase().includes('flee')
+            )
+            .map(q => q.id)
         );
       }
+      filtered = pool.filter(q => matchingIds.has(q.id));
     }
 
     // Safety fallback
@@ -474,34 +553,49 @@ export default function App() {
   };
 
   const resetAllStats = () => {
-    if (confirm("Are you sure you want to purge your complete Minnesota Permit progress history?")) {
+    const confirmMsg = language === 'es'
+      ? "¿Estás seguro de que deseas borrar todo tu historial de progreso del Permiso de Minnesota?"
+      : "Are you sure you want to purge your complete Minnesota Permit progress history?";
+    if (confirm(confirmMsg)) {
       setAttempts([]);
       localStorage.removeItem('mn_moto_permit_attempts');
     }
   };
 
+  const isEs = language === 'es';
+
   return (
     <div className="min-h-screen bg-slate-50 text-slate-800 flex flex-col font-sans selection:bg-blue-500/30 selection:text-blue-905">
       
-      <Header view={view} setView={setView} permitType={permitType} />
+      <Header
+        view={view}
+        setView={setView}
+        permitType={permitType}
+        language={language}
+        onToggleLanguage={handleToggleLanguage}
+      />
 
       {/* Main Content Area */}
       <main className="flex-1 max-w-6xl w-full mx-auto p-4 md:p-6 flex flex-col justify-start">
         
         {/* License Type Picker - Beautiful, responsive segment navigation selection */}
         {view !== 'quiz' && view !== 'disclaimer' && (
-          <div className="flex justify-center mb-6 animate-fade-in">
+          <div className="flex flex-col items-center gap-2 mb-6 animate-fade-in">
             <div className="bg-white p-1 rounded-2xl border-2 border-slate-200 shadow-sm flex flex-wrap items-center justify-center gap-1">
               <button
                 id="opt-license-moto"
+                disabled={isEs}
                 onClick={() => handleSetPermitType('motorcycle')}
-                className={`px-4 py-2.5 rounded-xl text-xs font-display font-medium tracking-wider transition-all duration-200 cursor-pointer flex items-center gap-2 active:scale-97 ${
-                  permitType === 'motorcycle'
-                    ? 'bg-amber-600 text-white font-bold shadow-sm'
-                    : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50'
+                title={isEs ? 'Disponible solo en inglés' : undefined}
+                className={`px-4 py-2.5 rounded-xl text-xs font-display font-medium tracking-wider transition-all duration-200 flex items-center gap-2 ${
+                  isEs
+                    ? 'opacity-45 cursor-not-allowed text-slate-400 bg-slate-50'
+                    : permitType === 'motorcycle'
+                    ? 'bg-amber-600 text-white font-bold shadow-sm cursor-pointer active:scale-97'
+                    : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50 cursor-pointer active:scale-97'
                 }`}
               >
-                <span>🏍️ Class M Motorcycle</span>
+                <span>{isEs ? '🏍️ Clase M Motocicleta (Solo EN)' : '🏍️ Class M Motorcycle'}</span>
               </button>
               <button
                 id="opt-license-driver"
@@ -512,20 +606,29 @@ export default function App() {
                     : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50'
                 }`}
               >
-                <span>🚗 Class D Driver</span>
+                <span>{isEs ? '🚗 Clase D Conductor' : '🚗 Class D Driver'}</span>
               </button>
               <button
                 id="opt-license-cdl"
+                disabled={isEs}
                 onClick={() => handleSetPermitType('cdl')}
-                className={`px-4 py-2.5 rounded-xl text-xs font-display font-medium tracking-wider transition-all duration-200 cursor-pointer flex items-center gap-2 active:scale-97 ${
-                  permitType === 'cdl'
-                    ? 'bg-emerald-600 text-white font-bold shadow-sm'
-                    : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50'
+                title={isEs ? 'Disponible solo en inglés' : undefined}
+                className={`px-4 py-2.5 rounded-xl text-xs font-display font-medium tracking-wider transition-all duration-200 flex items-center gap-2 ${
+                  isEs
+                    ? 'opacity-45 cursor-not-allowed text-slate-400 bg-slate-50'
+                    : permitType === 'cdl'
+                    ? 'bg-emerald-600 text-white font-bold shadow-sm cursor-pointer active:scale-97'
+                    : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50 cursor-pointer active:scale-97'
                 }`}
               >
-                <span>🚛 CDL Commercial &amp; TPR</span>
+                <span>{isEs ? '🚛 CDL Comercial y TPR (Solo EN)' : '🚛 CDL Commercial & TPR'}</span>
               </button>
             </div>
+            {isEs && (
+              <p className="text-[11px] font-medium text-indigo-700 bg-indigo-50 border border-indigo-100 px-3 py-1 rounded-full">
+                Modo en español activo: solo el examen Clase D está disponible según el manual oficial en español.
+              </p>
+            )}
           </div>
         )}
 
@@ -544,6 +647,7 @@ export default function App() {
                 setAutoRevocationTriggered={setAutoRevocationTriggered}
                 startQuiz={startQuiz}
                 permitType={permitType}
+                language={language}
               />
             </motion.div>
           )}
@@ -567,7 +671,10 @@ export default function App() {
                   isAnswerChecked={isAnswerChecked}
                   isSpeaking={isSpeaking}
                   onQuit={() => {
-                    if (confirm("Abandon your current session progress and exit back to test center?")) {
+                    const quitMsg = isEs
+                      ? "¿Abandonar el progreso de tu sesión actual y volver al centro de pruebas?"
+                      : "Abandon your current session progress and exit back to test center?";
+                    if (confirm(quitMsg)) {
                       setView('home');
                     }
                   }}
@@ -578,6 +685,7 @@ export default function App() {
                   permitType={permitType}
                   voiceVolume={voiceVolume}
                   setVoiceVolume={setVoiceVolume}
+                  language={language}
                 />
               ) : (
                 <QuizResultsView 
@@ -586,6 +694,7 @@ export default function App() {
                   mode={mode}
                   onRetake={() => startQuiz(mode)}
                   onReturnToHub={() => setView('home')}
+                  language={language}
                 />
               )}
             </motion.div>
@@ -604,6 +713,7 @@ export default function App() {
                 onResetStats={resetAllStats}
                 setView={setView}
                 permitType={permitType}
+                language={language}
               />
             </motion.div>
           )}
@@ -611,6 +721,7 @@ export default function App() {
           {view === 'disclaimer' && (
             <DisclaimerView 
               onAccept={handleAcceptDisclaimer}
+              language={language}
             />
           )}
 
@@ -622,16 +733,28 @@ export default function App() {
       <footer id="footer" className="mt-12 bg-white border-t border-slate-200 p-6 text-xs text-slate-500 leading-relaxed text-center sm:text-left shadow-inner transition-colors">
         <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
           <div className="space-y-3">
-            <p className="font-bold text-slate-800">MN-StudyBook — Minnesota Permit Practice Companion © 2026</p>
+            <p className="font-bold text-slate-800">
+              {isEs
+                ? 'MN-StudyBook — Compañero de Práctica para Permiso de Minnesota © 2026'
+                : 'MN-StudyBook — Minnesota Permit Practice Companion © 2026'}
+            </p>
             <p className="max-w-2xl text-slate-400">
-              Constructed strictly as a realistic studying helper based on safety guidelines cited from state public operator instruction manuals. This site is completely independent of the state driver licensing services division. Always practice safe driving techniques, pay full attention, and wear safety gear.
+              {isEs
+                ? 'Diseñado estrictamente como una herramienta realista de estudio basada en las pautas de seguridad de los manuales públicos del operador del estado. Este sitio es completamente independiente de la división estatal de licencias de conducir.'
+                : 'Constructed strictly as a realistic studying helper based on safety guidelines cited from state public operator instruction manuals. This site is completely independent of the state driver licensing services division. Always practice safe driving techniques, pay full attention, and wear safety gear.'}
             </p>
 
             {/* PayPal & Venmo Support Area */}
             <div className="flex flex-col sm:flex-row items-center gap-3 bg-slate-50 p-3.5 rounded-2xl border border-slate-100 max-w-md inline-flex">
               <div className="text-center sm:text-left">
-                <p className="text-[11px] font-bold text-slate-700">Support MN-StudyBook development</p>
-                <p className="text-[10px] text-slate-400 leading-tight">Keep study guides ad-free and updated for prospective drivers.</p>
+                <p className="text-[11px] font-bold text-slate-700">
+                  {isEs ? 'Apoya el desarrollo de MN-StudyBook' : 'Support MN-StudyBook development'}
+                </p>
+                <p className="text-[10px] text-slate-400 leading-tight">
+                  {isEs
+                    ? 'Mantén las guías de estudio sin anuncios y actualizadas para futuros conductores.'
+                    : 'Keep study guides ad-free and updated for prospective drivers.'}
+                </p>
               </div>
               <div id="paypal-container-MN_STUDY_DONATE" className="shrink-0 min-w-[130px] flex justify-center items-center">
                 <a 
@@ -646,25 +769,45 @@ export default function App() {
             </div>
           </div>
           <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 shrink-0 font-mono text-[10px] font-semibold text-slate-500">
-             <button onClick={() => setView('disclaimer')} className="text-blue-600 hover:text-blue-800 hover:underline cursor-pointer">
-              Disclaimer &amp; Rules
-             </button>
+            <button onClick={() => setView('disclaimer')} className="text-blue-600 hover:text-blue-800 hover:underline cursor-pointer">
+              {isEs ? 'Aviso Legal y Reglas' : 'Disclaimer & Rules'}
+            </button>
             <span>•</span>
-            <a href="https://assets.dps.mn.gov/files/dvs/motorcycle-manual.pdf" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:text-blue-800 hover:underline">
-              Class M Manual
-            </a>
-            <span>•</span>
-            <a href="https://assets.dps.mn.gov/files/dvs/dvs-class-d-drivers-manual-english.pdf" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:text-blue-800 hover:underline">
-              Class D Manual
-            </a>
-            <span>•</span>
-            <a href="https://assets.dps.mn.gov/files/dvs/dvs-commercial-drivers-license-manual.pdf" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:text-blue-800 hover:underline">
-              CDL Manual
-            </a>
-            <span>•</span>
-            <a href="https://assets.dps.mn.gov/files/dvs/TPR-Launch-Feb2022.pdf" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:text-blue-800 hover:underline">
-              TPR / ELDT Guide
-            </a>
+            {isEs ? (
+              <a
+                id="link-manual-class-d"
+                href="https://assets.dps.mn.gov/files/dvs/dvs-class-d-drivers-manual-spanish.pdf?v=1763159928"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-blue-600 hover:text-blue-800 hover:underline font-bold"
+              >
+                Manual Clase D (Español)
+              </a>
+            ) : (
+              <>
+                <a href="https://assets.dps.mn.gov/files/dvs/motorcycle-manual.pdf" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:text-blue-800 hover:underline">
+                  Class M Manual
+                </a>
+                <span>•</span>
+                <a
+                  id="link-manual-class-d"
+                  href="https://assets.dps.mn.gov/files/dvs/dvs-class-d-drivers-manual-english.pdf"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-blue-600 hover:text-blue-800 hover:underline"
+                >
+                  Class D Manual
+                </a>
+                <span>•</span>
+                <a href="https://assets.dps.mn.gov/files/dvs/dvs-commercial-drivers-license-manual.pdf" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:text-blue-800 hover:underline">
+                  CDL Manual
+                </a>
+                <span>•</span>
+                <a href="https://assets.dps.mn.gov/files/dvs/TPR-Launch-Feb2022.pdf" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:text-blue-800 hover:underline">
+                  TPR / ELDT Guide
+                </a>
+              </>
+            )}
           </div>
         </div>
       </footer>

@@ -14,3 +14,4 @@ export interface ExamAttempt {
 export type QuizMode = 'exam' | 'marathon' | 'controls' | 'lanes' | 'laws';
 export type AppView = 'home' | 'quiz' | 'stats' | 'disclaimer';
 export type PermitType = 'motorcycle' | 'classD' | 'cdl';
+export type Language = 'en' | 'es';
