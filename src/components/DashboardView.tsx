@@ -5,7 +5,8 @@ import {
   BookOpen, 
   TrendingUp, 
   ChevronRight, 
-  Play
+  Play,
+  Clock
 } from 'lucide-react';
 import { QuizMode, PermitType, Language } from '../types';
 
@@ -15,6 +16,8 @@ interface DashboardViewProps {
   startQuiz: (mode: QuizMode) => void;
   permitType: PermitType;
   language: Language;
+  isExamTimerEnabled: boolean;
+  onToggleExamTimer: () => void;
 }
 
 export default function DashboardView({ 
@@ -22,7 +25,9 @@ export default function DashboardView({
   setAutoRevocationTriggered, 
   startQuiz,
   permitType,
-  language
+  language,
+  isExamTimerEnabled,
+  onToggleExamTimer
 }: DashboardViewProps) {
   const isMoto = permitType === 'motorcycle';
   const isCdl = permitType === 'cdl';
@@ -168,8 +173,29 @@ export default function DashboardView({
                   {isEs ? 'Mínimo 80% (24 correctas) para aprobar' : 'Minimum 80% (24 correct) to clear'}
                 </li>
               </ul>
+
+              {/* Optional 60-Minute DMV Countdown Timer Toggle */}
+              <div className="mt-4 pt-3 border-t border-slate-100">
+                <label className="flex items-center justify-between gap-3 cursor-pointer select-none p-2.5 rounded-xl bg-slate-50 hover:bg-slate-100/80 border border-slate-200/80 transition-colors">
+                  <span className="flex items-center gap-2 text-xs font-semibold text-slate-700">
+                    <Clock className="w-4 h-4 text-blue-600 shrink-0" />
+                    <span>
+                      {isEs
+                        ? 'Temporizador de 60 min (Opcional)'
+                        : '60-min DMV countdown timer (Optional)'}
+                    </span>
+                  </span>
+                  <input
+                    id="toggle-exam-timer-dashboard"
+                    type="checkbox"
+                    checked={isExamTimerEnabled}
+                    onChange={onToggleExamTimer}
+                    className="w-4 h-4 accent-blue-600 rounded cursor-pointer shrink-0"
+                  />
+                </label>
+              </div>
             </div>
-            <div className="pt-6">
+            <div className="pt-5">
               <button
                 onClick={() => startQuiz('exam')}
                 className="w-full py-3 bg-rose-600 hover:bg-rose-750 text-white font-display font-bold text-sm rounded-xl transition-all cursor-pointer shadow-sm hover:shadow-md flex items-center justify-center gap-2 active:scale-98"

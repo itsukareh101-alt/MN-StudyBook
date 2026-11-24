@@ -100,6 +100,20 @@ export default function App() {
   const [quizFinished, setQuizFinished] = useState(false);
   const [autoRevocationTriggered, setAutoRevocationTriggered] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
+  const EXAM_TIMER_SECONDS = 60 * 60;
+  const [isExamTimerEnabled, setIsExamTimerEnabled] = useState(false);
+  const [timeRemainingSeconds, setTimeRemainingSeconds] = useState(EXAM_TIMER_SECONDS);
+  const [timeExpired, setTimeExpired] = useState(false);
+
+  const handleToggleExamTimer = () => {
+    setIsExamTimerEnabled(prev => {
+      const next = !prev;
+      if (next && timeRemainingSeconds <= 0) {
+        setTimeRemainingSeconds(EXAM_TIMER_SECONDS);
+      }
+      return next;
+    });
+  };
 
   // Softened Speech Synthesis configurations
   const [voiceVolume, setVoiceVolumeState] = useState<number>(() => {
@@ -176,6 +190,49 @@ export default function App() {
       setIsSpeaking(false);
     }
   }, [currentIndex, view, quizFinished]);
+
+  // Optional 60-minute countdown timer (strictly for Mock Exam mode)
+  useEffect(() => {
+    if (
+      mode !== 'exam' ||
+      !isExamTimerEnabled ||
+      view !== 'quiz' ||
+      quizFinished ||
+      autoRevocationTriggered
+    ) {
+      return;
+    }
+
+    const timer = setInterval(() => {
+      setTimeRemainingSeconds(prev => {
+        if (prev <= 1) {
+          clearInterval(timer);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [mode, isExamTimerEnabled, view, quizFinished, autoRevocationTriggered]);
+
+  // Handle timer reaching 0 during an active mock exam
+  useEffect(() => {
+    if (
+      mode === 'exam' &&
+      isExamTimerEnabled &&
+      view === 'quiz' &&
+      !quizFinished &&
+      !autoRevocationTriggered &&
+      timeRemainingSeconds === 0
+    ) {
+      const passingScore = Math.ceil(activeQuestions.length * 0.8);
+      const finalStatus = score < passingScore ? 'FAILED' : 'PASSED';
+      setTimeExpired(true);
+      setQuizFinished(true);
+      logAttempt(score, strikes, activeQuestions.length, finalStatus);
+    }
+  }, [timeRemainingSeconds, mode, isExamTimerEnabled, view, quizFinished, autoRevocationTriggered]);
 
   const currentQuestion = activeQuestions[currentIndex];
 
@@ -486,6 +543,8 @@ export default function App() {
     setStrikes(0);
     setQuizFinished(false);
     setAutoRevocationTriggered(false);
+    setTimeExpired(false);
+    setTimeRemainingSeconds(EXAM_TIMER_SECONDS);
     setView('quiz');
   };
 
@@ -648,6 +707,8 @@ export default function App() {
                 startQuiz={startQuiz}
                 permitType={permitType}
                 language={language}
+                isExamTimerEnabled={isExamTimerEnabled}
+                onToggleExamTimer={handleToggleExamTimer}
               />
             </motion.div>
           )}
@@ -686,6 +747,9 @@ export default function App() {
                   voiceVolume={voiceVolume}
                   setVoiceVolume={setVoiceVolume}
                   language={language}
+                  isExamTimerEnabled={isExamTimerEnabled}
+                  onToggleExamTimer={handleToggleExamTimer}
+                  timeRemainingSeconds={timeRemainingSeconds}
                 />
               ) : (
                 <QuizResultsView 
@@ -695,6 +759,7 @@ export default function App() {
                   onRetake={() => startQuiz(mode)}
                   onReturnToHub={() => setView('home')}
                   language={language}
+                  timeExpired={timeExpired}
                 />
               )}
             </motion.div>

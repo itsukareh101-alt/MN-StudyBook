@@ -9,6 +9,7 @@ interface QuizResultsViewProps {
   onRetake: () => void;
   onReturnToHub: () => void;
   language: Language;
+  timeExpired?: boolean;
 }
 
 export default function QuizResultsView({ 
@@ -17,7 +18,8 @@ export default function QuizResultsView({
   mode, 
   onRetake, 
   onReturnToHub,
-  language
+  language,
+  timeExpired = false
 }: QuizResultsViewProps) {
   const isEs = language === 'es';
   const percentage = Math.round((score / totalQuestions) * 100);
@@ -61,6 +63,11 @@ export default function QuizResultsView({
             ? 'Tus estadísticas finales de comprensión se muestran a continuación. Los requisitos estándar exigen un mínimo de 80% para aprobar.'
             : 'Your final comprehension statistics are cataloged below. Standard licensing limits require scoring 80% or higher to pass.'}
         </p>
+        {isExam && timeExpired && (
+          <p className="inline-block text-[11px] font-mono font-bold text-rose-700 bg-rose-50 border border-rose-200 px-3 py-1 rounded-full">
+            {isEs ? '⏱️ El temporizador de 60 minutos expiró' : '⏱️ 60-minute exam timer expired'}
+          </p>
+        )}
       </div>
 
       <div className="grid grid-cols-3 gap-4 max-w-lg mx-auto pt-4 text-center">

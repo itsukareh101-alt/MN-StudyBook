@@ -7,7 +7,8 @@ import {
   ArrowRight, 
   CheckCircle2, 
   XCircle,
-  Sliders
+  Sliders,
+  Clock
 } from 'lucide-react';
 import { Question, QuizMode, PermitType, Language } from '../types';
 
@@ -28,6 +29,9 @@ interface QuizActiveViewProps {
   voiceVolume: number;
   setVoiceVolume: (v: number) => void;
   language: Language;
+  isExamTimerEnabled: boolean;
+  onToggleExamTimer: () => void;
+  timeRemainingSeconds: number;
 }
 
 export default function QuizActiveView({
@@ -46,7 +50,10 @@ export default function QuizActiveView({
   permitType,
   voiceVolume,
   setVoiceVolume,
-  language
+  language,
+  isExamTimerEnabled,
+  onToggleExamTimer,
+  timeRemainingSeconds
 }: QuizActiveViewProps) {
   const [showVoiceSettings, setShowVoiceSettings] = useState(false);
   const currentQuestion = activeQuestions[currentIndex];
@@ -54,7 +61,16 @@ export default function QuizActiveView({
 
   const isEs = language === 'es';
   const totalQuestions = activeQuestions.length;
-  const progressPercent = ((currentIndex + 1) / totalQuestions) * 100;
+  const completedCount = isAnswerChecked ? currentIndex + 1 : currentIndex;
+  const completionPercentage = totalQuestions > 0 ? Math.round((completedCount / totalQuestions) * 100) : 0;
+
+  const totalExamSeconds = 60 * 60;
+  const minutesRemaining = Math.floor(timeRemainingSeconds / 60);
+  const secondsRemaining = timeRemainingSeconds % 60;
+  const formattedTime = `${String(minutesRemaining).padStart(2, '0')}:${String(secondsRemaining).padStart(2, '0')}`;
+  const timeRemainingPercent = Math.max(0, Math.min(100, (timeRemainingSeconds / totalExamSeconds) * 100));
+  const isTimeLow = timeRemainingSeconds <= 600; // <= 10 minutes
+  const isTimeCritical = timeRemainingSeconds <= 120; // <= 2 minutes
 
   const getModeBadge = () => {
     if (isEs) {
@@ -85,7 +101,35 @@ export default function QuizActiveView({
             {getModeBadge()}
           </span>
         </div>
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-2 sm:gap-3 flex-wrap justify-end">
+          {mode === 'exam' && (
+            <button
+              id="btn-exam-timer-toggle"
+              type="button"
+              onClick={onToggleExamTimer}
+              title={
+                isEs
+                  ? (isExamTimerEnabled ? 'Desactivar temporizador de 60 min' : 'Activar temporizador de 60 min')
+                  : (isExamTimerEnabled ? 'Disable 60-min timer' : 'Enable 60-min DMV timer')
+              }
+              className={`px-2.5 py-1 rounded-xl border text-[11px] font-mono font-bold flex items-center gap-1.5 transition-all cursor-pointer active:scale-97 ${
+                isExamTimerEnabled
+                  ? isTimeCritical
+                    ? 'bg-rose-50 border-rose-300 text-rose-700 animate-pulse'
+                    : isTimeLow
+                    ? 'bg-amber-50 border-amber-300 text-amber-800'
+                    : 'bg-blue-50 border-blue-200 text-blue-700'
+                  : 'bg-white border-slate-200 text-slate-500 hover:bg-slate-50 hover:text-slate-700'
+              }`}
+            >
+              <Clock className="w-3.5 h-3.5 shrink-0" />
+              <span>
+                {isExamTimerEnabled
+                  ? formattedTime
+                  : (isEs ? 'Temporizador 60m' : '60m Timer')}
+              </span>
+            </button>
+          )}
           <span className="font-mono text-slate-600 font-bold bg-slate-100 px-3 py-1 rounded-xl border border-slate-200">
             {isEs ? `Pregunta ${currentIndex + 1} de ${totalQuestions}` : `Question ${currentIndex + 1} of ${totalQuestions}`}
           </span>
@@ -99,14 +143,83 @@ export default function QuizActiveView({
       </div>
 
       {/* Progress Bar */}
-      <div className="px-2">
-        <div className="w-full h-2.5 bg-slate-100 rounded-full overflow-hidden">
+      <div className="px-2 space-y-1.5">
+        <div className="flex items-center justify-between text-[11px] font-mono">
+          <span className="text-slate-500 font-semibold">
+            {isEs
+              ? `Progreso: ${completedCount} de ${totalQuestions} completadas`
+              : `Completion: ${completedCount} of ${totalQuestions} answered`}
+          </span>
+          <span
+            id="quiz-completion-percent"
+            className={`font-bold ${completionPercentage === 100 ? 'text-emerald-600' : 'text-blue-700'}`}
+          >
+            {completionPercentage}%
+          </span>
+        </div>
+        <div
+          role="progressbar"
+          aria-label={isEs ? 'Progreso del examen o práctica' : 'Exam or drill completion progress'}
+          aria-valuenow={completionPercentage}
+          aria-valuemin={0}
+          aria-valuemax={100}
+          className="w-full h-3 bg-slate-200/80 rounded-full overflow-hidden border border-slate-200/70"
+        >
           <div 
-            className="h-full bg-blue-600 rounded-full transition-all duration-300 ease-out"
-            style={{ width: `${progressPercent}%` }}
+            className={`h-full rounded-full transition-all duration-300 ease-out ${
+              completionPercentage === 100 ? 'bg-emerald-500' : 'bg-blue-600'
+            }`}
+            style={{ width: `${completionPercentage}%` }}
           />
         </div>
       </div>
+
+      {/* Optional 60-Minute DMV Countdown Timer Visual Bar (Mock Exam Only) */}
+      {mode === 'exam' && isExamTimerEnabled && (
+        <div
+          id="exam-countdown-panel"
+          className={`mx-2 px-4 py-2.5 rounded-2xl border space-y-1.5 transition-colors ${
+            isTimeCritical
+              ? 'bg-rose-50 border-rose-200 text-rose-800'
+              : isTimeLow
+              ? 'bg-amber-50 border-amber-200 text-amber-900'
+              : 'bg-slate-50 border-slate-200 text-slate-700'
+          }`}
+        >
+          <div className="flex items-center justify-between text-[11px] font-mono">
+            <span className="flex items-center gap-1.5 font-bold uppercase tracking-wider">
+              <Clock className="w-3.5 h-3.5" />
+              <span>{isEs ? 'Tiempo Restante (Límite DMV 60 min)' : 'DMV Exam Time Remaining (60m Limit)'}</span>
+            </span>
+            <div className="flex items-center gap-2.5">
+              <span className="font-extrabold text-xs">{formattedTime}</span>
+              <button
+                type="button"
+                onClick={onToggleExamTimer}
+                className="text-[10px] underline opacity-75 hover:opacity-100 cursor-pointer"
+              >
+                {isEs ? 'Ocultar' : 'Turn off'}
+              </button>
+            </div>
+          </div>
+          <div
+            role="timer"
+            aria-label={isEs ? 'Tiempo restante del examen' : 'Exam time remaining'}
+            className="w-full h-2 bg-white/80 rounded-full overflow-hidden border border-black/5"
+          >
+            <div
+              className={`h-full rounded-full transition-all duration-1000 ease-linear ${
+                isTimeCritical
+                  ? 'bg-rose-500'
+                  : isTimeLow
+                  ? 'bg-amber-500'
+                  : 'bg-indigo-600'
+              }`}
+              style={{ width: `${timeRemainingPercent}%` }}
+            />
+          </div>
+        </div>
+      )}
 
       {/* EXAM STRIKES (Only active for Real Exam) */}
       {mode === 'exam' && strikes > 0 && (
